@@ -94,6 +94,7 @@ class Watch:
 	repeat = 0
 	timeout = -1
 	timeoutLimit = 10
+	delay = False
 	wait = 0
 
 	def __init__(self,maxSize=1):
@@ -112,24 +113,26 @@ class Watch:
 
 	def check(self):
 		# Wait a bit if we have already contributed
+		l = len(self.spamQueue)
 		if self.timeout == -1:
 			if self.wait > 0:
-				if self.spamQueue.count(self.spamQueue[0]) > self.repeat:
+				if self.spamQueue.count(self.spamQueue[l-1]) > self.repeat:
 					self.timeout = time.time()
+					self.delay = True
 					self.wait = self.repeat
-					return self.spamQueue[0]
+					return self.spamQueue[l-1]
 			else:
 				self.wait -= 1
 			# else wait for spam to happen
 		elif (time.time() - self.timeout) > self.timeoutLimit:
-			self.timeout = -2
+			self.timeout = -1
 			return None
 		else:
 			if len(self.spamQueue) != 0:
 				self.spamQueue.pop(0)
-			if self.timeout is -2:
+			if self.delay:
 				print 'Gonna wait a bit to not get auto-banned.'
-				self.timeout = -1
+				self.delay = False
 
 def main():
 	k = Kappa()
