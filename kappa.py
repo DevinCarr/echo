@@ -93,7 +93,7 @@ class Watch:
 	size = 0
 	repeat = 0
 	timeout = -1
-	timeoutLimit = 10
+	timeoutLimit = 7
 	delay = False
 	wait = 0
 
@@ -126,6 +126,7 @@ class Watch:
 			# else wait for spam to happen
 		elif (time.time() - self.timeout) > self.timeoutLimit:
 			self.timeout = -1
+			print 'We have waited plenty.'
 			return None
 		else:
 			if len(self.spamQueue) != 0:

@@ -10,5 +10,13 @@ $ python kappa.py
 ```
 Type in your password using the oauth key generated from [here](http://twitchapps.com/tmi/) and then the channel of the twitch.tv stream.
 
+## Other
+Echo occassionally shows:
+```shell
+< PING
+> PONG :tmi.twitch.tv
+```
+This is a common response that echo makes to make sure that the twitch IRC doesn't disconnect echo for being AFK. ([Further](https://github.com/justintv/Twitch-API/blob/master/IRC.md))
+
 ## License
 MIT - (view LICENSE for more information)
