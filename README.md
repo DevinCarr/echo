@@ -10,6 +10,12 @@ $ python kappa.py
 ```
 Type in your password using the oauth key generated from [here](http://twitchapps.com/tmi/) and then the channel of the twitch.tv stream.
 
+### Levels
+If you want to join in a bit more often:
+```shell
+$ python kappa.py --high
+```
+
 ## Other
 Echo occassionally shows:
 ```shell

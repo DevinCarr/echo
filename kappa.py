@@ -5,15 +5,14 @@ import sys
 class Kappa:
 	socket = None
 	connected = False
-	nickname = 'feedthespam'
+	nickname = ''
 	password = 'oauth:'
 	channel = '#'
 	watcher = None
-	frequency = 4
 
 	def __init__(self):
+		self.watcher = self.parseArgs()
 		self.begin()
-		self.watcher = Watch(self.frequency)
 		self.socket = socket.socket()
 		self.socket.connect(('irc.twitch.tv', 6667))
 		self.send("PASS %s" % self.password)
@@ -76,10 +75,21 @@ class Kappa:
 		time.sleep(1)
 		self.send("PART %s" % self.channel)
 
+	def parseArgs(self):
+		args = sys.argv[1:]
+		ret = Watch(1)
+		for a in args:
+			if a == '--high':
+				ret = Watch(2)
+		return ret
+
 	def begin(self):
 		print 'Welcome to echo.\n'
-		print 'We will now be operating at a spam frequency of 1/%s' % self.frequency
-		s = raw_input('\nPlease type in your oauth token here: ')
+		l = 'high' if self.watcher.level == 2 else 'low'
+		print 'We will now be operating at level: %s' % l
+		s = raw_input('\nTwitch Username: ')
+		self.nickname = s
+		s = raw_input('Please type in your oauth token here: ')
 		if (s.find('oauth:') != -1):
 			self.password = s
 		else:
@@ -88,20 +98,30 @@ class Kappa:
 		self.channel += raw_input('Channel to join: ')
 		print 'Let\'s Begin.'
 
+
 class Watch:
+	level = None
 	spamQueue = []
 	size = 0
-	repeat = 0
+	repeatCount = 0
 	timeout = -1
 	timeoutLimit = 7
-	delay = False
-	wait = 0
+	message = False
 
-	def __init__(self,maxSize=1):
+	def __init__(self,lvl):
 		self.spamQueue = []
-		self.size = maxSize*10
-		self.repeat = self.size / 10
-		self.wait = self.repeat
+		self.level = lvl
+		self.setup()
+
+	def setup(self):
+		if self.level is 1:
+			self.timeoutLimit = 7
+			self.size = 40
+			self.repeatCount = 4
+		elif self.level is 2:
+			self.timeoutLimit = 5
+			self.size = 50
+			self.repeatCount = 3
 
 	def add(self,msg):
 		current = len(self.spamQueue)
@@ -115,14 +135,10 @@ class Watch:
 		# Wait a bit if we have already contributed
 		l = len(self.spamQueue)
 		if self.timeout == -1:
-			if self.wait > 0:
-				if self.spamQueue.count(self.spamQueue[l-1]) > self.repeat:
-					self.timeout = time.time()
-					self.delay = True
-					self.wait = self.repeat
-					return self.spamQueue[l-1]
-			else:
-				self.wait -= 1
+			if self.spamQueue.count(self.spamQueue[l-1]) > self.repeatCount:
+				self.timeout = time.time()
+				self.message = True
+				return self.spamQueue[l-1]
 			# else wait for spam to happen
 		elif (time.time() - self.timeout) > self.timeoutLimit:
 			self.timeout = -1
@@ -131,9 +147,9 @@ class Watch:
 		else:
 			if len(self.spamQueue) != 0:
 				self.spamQueue.pop(0)
-			if self.delay:
+			if self.message:
 				print 'Gonna wait a bit to not get auto-banned.'
-				self.delay = False
+				self.message = False
 
 def main():
 	k = Kappa()
