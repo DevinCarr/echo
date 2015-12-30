@@ -55,7 +55,7 @@ bool IRCClient::login(std::string nick, std::string pass) {
 bool IRCClient::join(std::string channel) {
     _channel = channel;
 
-    if (send("JOIN #" + channel) && send("JOIN #jtv")) {
+    if (send("JOIN #" + channel)) {
         return true;
     }
 

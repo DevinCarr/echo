@@ -86,8 +86,8 @@ void connect_to_whispers(IRCClient* iirc) {
         log->i("Logging in as: " + nick);
         if (iirc->login(nick,pass)) {
             log->i("!Logged in");
-            log->i("Joining channel: " + channel);
-            if (iirc->join(channel)) {
+            log->i("Joining channel: jtv");
+            if (iirc->join("#jtv")) {
                 log->i("!Joined channel");
                 if (pthread_create(&w_thread, NULL, parse_whispers, iirc) == 0) {
                     log->i("Started watching channel");
