@@ -30,6 +30,7 @@ public:
     ~IRCClient();
     bool connected() { return irc.connected(); }
     void set_owner(std::string owner);
+    std::string get_owner() { return _owner; }
     bool connect(char * hostname, int port);
     void disconnect();
     bool send(std::string msg);

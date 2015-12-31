@@ -47,12 +47,16 @@ void* parse_whispers(void* args) {
     IRCClient* iirc = (IRCClient*)args;
     
     // Send ready message to owner
-    if (iirc->priv_me("Echo live in: " + channel)) {
-        log->i("Sent live message to: " + owner);
+    if (iirc->priv_me("Running at: " + channel)) {
+        log->i("Sent live message to: " + iirc->get_owner());
     }
 
     while(iirc->connected() && running) {
-        iirc->parse();
+       ;;
+    }
+
+    if (iirc->priv_me("Shutting down..")) {
+        log->i("Sent shutdown message to: " + iirc->get_owner());
     }
     pthread_exit(0);
 }
