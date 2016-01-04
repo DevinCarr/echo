@@ -76,12 +76,31 @@ void IRCClient::parse() {
     std::string buffer;
     buffer = read();
     
-    log->d(buffer);
+//    log->d(buffer);
     // Check watch commands
     if (buffer.substr(0,4).compare("PING") == 0) {
         log->d("PING recieved");
         send("PONG" + buffer.substr(4));
         log->d("PONG replied");
         return;
+    }
+
+    // Parse text normally
+    std::string message;
+    std::string user;
+    
+    // Search for message
+    std::string search_str = "PRIVMSG #" + _channel;
+    std::size_t fnd = buffer.find(search_str);
+    if (fnd != std::string::npos) {
+        message = buffer.substr(fnd+search_str.length()+2);
+        if (!message.empty()) {
+            // Parse user
+            fnd = buffer.find("!");
+            if (fnd != std::string::npos) {
+                user = buffer.substr(1,fnd-1);
+                log->d(user + ": " + message);
+            }
+        }
     }
 }
