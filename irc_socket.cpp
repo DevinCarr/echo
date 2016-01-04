@@ -63,10 +63,8 @@ std::string IRCSocket::sread() {
 
     memset(buffer, 0, MAX_MESSAGE);
 
-    log->i("recv now");
     int res = recv(_sockfd, buffer, MAX_MESSAGE - 1, 0);
     if (res > 0) {
-        log->i("got message");
         return std::string(buffer);
     } else {
         log->e("Bad sread(): disconnecting");
