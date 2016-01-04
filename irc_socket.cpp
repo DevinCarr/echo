@@ -11,7 +11,7 @@
 
 #include "irc_socket.h"
 
-const int MAX_MESSAGE = 4096;
+const int MAX_MESSAGE = 2048;
 
 IRCSocket::IRCSocket(Log* l): _connected(false), log(l) {
     if ((_sockfd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) {
@@ -69,8 +69,10 @@ std::string IRCSocket::sread() {
 
     memset(buffer, 0, MAX_MESSAGE);
 
+    log->i("recv now");
     int res = recv(_sockfd, buffer, MAX_MESSAGE - 1, 0);
     if (res > 0) {
+        log->i("got message");
         return std::string(buffer);
     } else {
         log->e("Bad sread(): disconnecting");

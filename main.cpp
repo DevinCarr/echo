@@ -164,12 +164,9 @@ int main(int argc, char * argv[]) {
     // Setup signal watch
     signal(SIGINT, signal_handler);
 
-    // Allow cin while running.
-    // NOTE: output is routed through logs!
-    std::string line;
+    // Wait here in main loop for the other threads
     while (irc->connected() && running) {
-        getline(std::cin,line);
-        irc->send(line);
+        ;;
     }
     
     // Begin clean shutdown
