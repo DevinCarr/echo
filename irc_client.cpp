@@ -66,17 +66,16 @@ bool IRCClient::priv_me(std::string msg) {
     return false;
 }
 
-void IRCClient::parse() {
+Message IRCClient::parse() {
     std::string buffer;
     buffer = read();
     
-//    log->d(buffer);
     // Check watch commands
     if (buffer.substr(0,4).compare("PING") == 0) {
         log->d("PING recieved");
         send("PONG" + buffer.substr(4));
         log->d("PONG replied");
-        return;
+        return Message("irc","ping");
     }
 
     // Parse text normally
@@ -94,6 +93,7 @@ void IRCClient::parse() {
             if (fnd != std::string::npos) {
                 user = buffer.substr(1,fnd-1);
                 log->d(user + ": " + message);
+                return Message(user,message);
             }
         }
     }

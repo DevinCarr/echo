@@ -3,8 +3,9 @@
  * Licensed under MIT (https://github.com/devincarr/echo/blob/master/LICENSE)
  */
 
-#include "irc_client.h"
 #include "logger.h"
+#include "irc_client.h"
+#include "watcher.h"
 
 #include <iostream>
 #include <pthread.h>
@@ -12,7 +13,7 @@
 
 // Global variables for threads and state monitoring
 volatile bool running = false;
-Log* log;
+Log* logger;
 pthread_t irc_thread;
 pthread_t w_thread;
 
@@ -31,9 +32,13 @@ void signal_handler(int signal) {
 
 void* parse_irc(void* args) {
     IRCClient* iirc = (IRCClient*)args;
+    Watcher* watcher = new Watcher(logger,iirc);
+    watcher->start();
     while (iirc->connected() && running) {
-        iirc->parse();
+        ;;
     }
+    watcher->stop();
+    delete watcher;
     pthread_exit(0);
 }
 
@@ -42,7 +47,7 @@ void* parse_whispers(void* args) {
     
     // Send ready message to owner
     if (iirc->priv_me("Running at: " + channel)) {
-        log->i("Sent live message to: " + iirc->get_owner());
+        logger->i("Sent live message to: " + iirc->get_owner());
     }
 
     while(iirc->connected() && running) {
@@ -50,7 +55,7 @@ void* parse_whispers(void* args) {
     }
 
     if (iirc->priv_me("Shutting down..")) {
-        log->i("Sent shutdown message to: " + iirc->get_owner());
+        logger->i("Sent shutdown message to: " + iirc->get_owner());
     }
     pthread_exit(0);
 }
@@ -58,17 +63,17 @@ void* parse_whispers(void* args) {
 // Connect to the standard irc server
 void connect_to_irc(IRCClient* iirc) {
     iirc->set_owner(owner);
-    log->i("Connecting to: " + std::string(tmi_hostname));
+    logger->i("Connecting to: " + std::string(tmi_hostname));
     if (iirc->connect(tmi_hostname,port)) {
-        log->i("!Connected");
-        log->i("Logging in as: " + nick);
+        logger->i("!Connected");
+        logger->i("Logging in as: " + nick);
         if (iirc->login(nick,pass)) {
-            log->i("!Logged in");
-            log->i("Joining channel: " + channel);
+            logger->i("!Logged in");
+            logger->i("Joining channel: " + channel);
             if (iirc->join(channel)) {
-                log->i("!Joined channel");
+                logger->i("!Joined channel");
                 if (pthread_create(&irc_thread, NULL, parse_irc, iirc) == 0) {
-                    log->i("Started watching channel");
+                    logger->i("Started watching channel");
                 }
             }
         }
@@ -78,17 +83,17 @@ void connect_to_irc(IRCClient* iirc) {
 // Connect to the group chat server for whispers
 void connect_to_whispers(IRCClient* iirc) {
     iirc->set_owner(owner);
-    log->i("Connecting to: " + std::string(whispers_hostname));
+    logger->i("Connecting to: " + std::string(whispers_hostname));
     if (iirc->connect(whispers_hostname,port)) {
-        log->i("!Connected");
-        log->i("Logging in as: " + nick);
+        logger->i("!Connected");
+        logger->i("Logging in as: " + nick);
         if (iirc->login(nick,pass)) {
-            log->i("!Logged in");
-            log->i("Joining channel: jtv");
+            logger->i("!Logged in");
+            logger->i("Joining channel: jtv");
             if (iirc->join("#jtv")) {
-                log->i("!Joined channel");
+                logger->i("!Joined channel");
                 if (pthread_create(&w_thread, NULL, parse_whispers, iirc) == 0) {
-                    log->i("Started watching channel");
+                    logger->i("Started watching channel");
                 }
             }
         }
@@ -97,23 +102,23 @@ void connect_to_whispers(IRCClient* iirc) {
 
 // Begin shutting down and cleanup
 void close() {
-    log->i("Shutting down...");
+    logger->i("Shutting down...");
 
     void* status;
 
     if (!running) {
-        log->i("Joining irc_thread");
+        logger->i("Joining irc_thread");
         int rc = pthread_join(irc_thread, &status);
         if (rc) {
-            log->e("THREAD: irc_thread failed to join");
+            logger->e("THREAD: irc_thread failed to join");
         }
-        log->d("irc_thread joined");
-        log->d("Joining w_thread");
+        logger->d("irc_thread joined");
+        logger->d("Joining w_thread");
         rc = pthread_join(w_thread, &status);
         if (rc) {
-            log->e("THREAD: w_thread failed to join");
+            logger->e("THREAD: w_thread failed to join");
         }
-        log->d("w_thread joined");
+        logger->d("w_thread joined");
     }
 }
 
@@ -142,15 +147,15 @@ int main(int argc, char * argv[]) {
     }
 
     // Start logging
-    log = new Log();
-    log->open_file();
-    log->i("Starting echo");
+    logger = new Log();
+    logger->open_file();
+    logger->i("Starting echo");
 
     running = true;
 
     // Begin connections
-    IRCClient* irc = new IRCClient(log);
-    IRCClient* wisp = new IRCClient(log);
+    IRCClient* irc = new IRCClient(logger);
+    IRCClient* wisp = new IRCClient(logger);
 
     connect_to_irc(irc);
     connect_to_whispers(wisp);
@@ -169,10 +174,10 @@ int main(int argc, char * argv[]) {
     delete irc;
     delete wisp;
 
-    log->i("Shutdown complete");
-    log->close_file();
+    logger->i("Shutdown complete");
+    logger->close_file();
 
-    delete log;
+    delete logger;
 
     return 0;
 }

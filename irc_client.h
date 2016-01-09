@@ -8,6 +8,7 @@
 
 #include "irc_socket.h"
 #include "logger.h"
+#include "message.h"
 
 class IRCClient {
 private:
@@ -32,7 +33,7 @@ public:
     bool login(std::string nick, std::string pass);
     bool join(std::string channel);
     bool priv_me(std::string msg);
-    void parse();
+    Message parse();
 };
 
 #endif

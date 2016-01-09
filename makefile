@@ -2,7 +2,7 @@
 
 TARGET = echo
 
-CXXFlags = -std=c++11
+CXXFlags = -g -std=c++11
 
 UNAME_S := $(shell uname -s)
 
@@ -16,13 +16,23 @@ all: $(TARGET)
 
 logger.o: logger.cpp logger.h
 	$(CXX) -c $(CXXFlags) $<
+
+semaphore.o: semaphore.cpp semaphore.h
+	$(CXX) -c $(CXXFlags) $<
+
 irc_socket.o: irc_socket.cpp irc_socket.h
 	$(CXX) -c $(CXXFlags) $<
 
 irc_client.o: irc_client.cpp irc_client.h
 	$(CXX) -c $(CXXFlags) $<
 
-$(TARGET): main.cpp irc_client.o irc_socket.o logger.o
+watcher.o: watcher.cpp watcher.h
+	$(CXX) -c $(CXXFlags) $<
+
+main.o: main.cpp
+	$(CXX) -c $(CXXFlags) $<
+
+$(TARGET): main.o irc_client.o irc_socket.o logger.o semaphore.o watcher.o
 	$(CXX) $(CXXFlags) -o $(TARGET) $^ -lpthread
 
 clean:
