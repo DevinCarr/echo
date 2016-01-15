@@ -97,4 +97,7 @@ Message IRCClient::parse() {
             }
         }
     }
+    
+    // Bad Message
+    return Message("","");
 }
