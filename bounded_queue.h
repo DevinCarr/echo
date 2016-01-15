@@ -1,5 +1,9 @@
-#ifndef _bounded_queue_h_
-#define _bounded_queue_h_
+/*
+ * Copyright (c) 2015 Devin Carr
+ * Licensed under MIT (https://github.com/devincarr/echo/blob/master/LICENSE)
+ */
+
+#pragma once
 
 #include "semaphore.h"
 #include <string>
@@ -43,5 +47,3 @@ void BoundedQueue<T>::push(T t) {
   mutex.V();
   full.V();
 }
-
-#endif

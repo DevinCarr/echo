@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2015 Devin Carr
+ * Licensed under MIT (https://github.com/devincarr/echo/blob/master/LICENSE)
+ */
+
 #pragma once
 
 #include "logger.h"

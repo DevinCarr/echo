@@ -1,5 +1,9 @@
-#ifndef _semaphore_h_
-#define _semaphore_h_
+/*
+ * Copyright (c) 2015 Devin Carr
+ * Licensed under MIT (https://github.com/devincarr/echo/blob/master/LICENSE)
+ */
+
+#pragma once
 
 #include <pthread.h>
 
@@ -15,5 +19,3 @@ public:
   int P();
   int V();
 };
-
-#endif

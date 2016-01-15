@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2015 Devin Carr
+ * Licensed under MIT (https://github.com/devincarr/echo/blob/master/LICENSE)
+ */
+
 #include "semaphore.h"
 
 Semaphore::Semaphore(int _val): value(_val) {
