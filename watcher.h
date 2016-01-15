@@ -1,5 +1,4 @@
-#ifndef _watcher_h_
-#define _watcher_h_
+#pragma once
 
 #include "logger.h"
 #include "irc_client.h"
@@ -8,12 +7,14 @@
 
 #include <cmath>
 #include <iostream>
+#include <functional>
 #include <pthread.h>
 #include <string>
+#include <thread>
 #include <vector>
 
 // The total number of msgs to check in a thread
-#define QUEUE_BOUND 20
+#define QUEUE_BOUND 10
 // The difference in length tolerance for the message text
 #define DIFF_TOL 3
 // Maximum number of parse threads running at a time
@@ -24,9 +25,7 @@ private:
     Log* log;
     IRCClient* irc;
     volatile bool _running;
-    pthread_t _push_thread;
-    pthread_t _pull_thread;
-    std::vector<pthread_t> _parse_threads;
+    std::vector<std::thread> _running_threads;
     BoundedQueue<Message>* msg_queue;
 public:
     Watcher(Log* l, IRCClient* i);
@@ -34,17 +33,9 @@ public:
     bool running() { return _running; }
     void start();
     void stop();
-    IRCClient* get_irc() { return irc; }
-    BoundedQueue<Message>* get_queue() { return msg_queue; }
-    Log* get_log() { return log; }
-    bool get_thread(pthread_t t);
-    void free_thread(pthread_t tid);
+
+    void push_handler();
+    void pull_handler();
+    void parse_handler(std::vector<Message> msgs);
 };
 
-struct ThreadArgs {
-    ThreadArgs(): w(nullptr), q(nullptr) { }
-    Watcher* w;
-    std::vector<Message>* q;
-};
-
-#endif

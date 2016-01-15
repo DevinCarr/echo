@@ -14,147 +14,82 @@ Watcher::~Watcher() {
     delete msg_queue;
 }
 
-/*
- * Thread handler functions, and ld_calc
- */
-static void* push_handler(void* args);
-static void* pull_handler(void* args);
-static void* parse_handler(void* args);
 int levenshtein_distance(std::string s, std::string t);
 
 void Watcher::start() {
     log->d("Starting watcher threads");
-    _push_thread = pthread_t();
-    _pull_thread = pthread_t();
     _running = true;
-    if (pthread_create(&_push_thread, NULL, push_handler, this) == 0) {
-        log->w("Failed to create a push_handler thread!");
-    }
 
-    if (pthread_create(&_pull_thread, NULL, pull_handler, this) == 0) {
-        log->w("Failed to create a pull_handler thread!");
-    }
+    // Start the push thread
+    std::thread push_t(&Watcher::push_handler,this);
+    _running_threads.push_back(std::move(push_t));
+
+    // Start the pull thread
+    std::thread pull_t(&Watcher::pull_handler,this);
+    _running_threads.push_back(std::move(pull_t));
+
     log->d("Watcher threads running");
 }
 
 void Watcher::stop() {
-    // Join threads running in the _parse_threads
-    int ret;
-    void* status;
-    for (int i = 0; i < _parse_threads.size(); i++) {
-        ret = pthread_join(_parse_threads[i], &status);
-        if (ret) {
-            log->w("Error joining parse thread after stopping; err id:" + ret);
-        }
-    }
-    
     // Set the stop for the push/pull threads
+    log->d("Halting running threads");
     _running = false;
-    ret = pthread_join(_push_thread, &status);
-    if (ret) {
-        log->w("Error joining push thread after stopping; err id:" + ret);
-    }
 
-    ret = pthread_join(_pull_thread, &status);
-    if (ret) {
-        log->w("Error joining pull thread after stopping; err id:" + ret);
-    }
+    std::for_each(_running_threads.begin(), _running_threads.end(), [](std::thread& t) {
+            if (t.joinable())
+                t.join();
+    });
     
-}
-
-// Creates a new thread and marks it as in use in the _parse_threads vector
-// If there are already too many threads running, return NULL
-bool Watcher::get_thread(pthread_t t) {
-    if (_parse_threads.size() >= MAX_THREADS) {
-        _parse_threads.push_back(t);
-        return true;
-    } else {
-        return false;
-    }
-}
-
-// Remove a completed thread from the _parse_threads
-void Watcher::free_thread(pthread_t tid) {
-    auto thread = _parse_threads.begin();
-    while(thread != _parse_threads.end()) {
-        if (pthread_equal(tid,*thread) != 0) {
-            _parse_threads.erase(thread);
-        } else {
-            thread++;
-        }
-    }
+    log->d("All watcher threads joined");
 }
 
 // Push thread to acquire the messages and push them into
 // the queue to be pulled out with the pull_handler
-static void* push_handler(void* args) {
-    Watcher* watcher = (Watcher*)args;
-    BoundedQueue<Message>* queue = watcher->get_queue();
-    IRCClient* iirc = watcher->get_irc();
-
+void Watcher::push_handler() {
     // Main push loop
-    while(iirc->connected() && watcher->running()) {
-        queue->push(iirc->parse());
+    while(running() && irc->connected()) {
+        msg_queue->push(irc->parse());
     }
-    
-    // Thread exit
-    pthread_exit(0);
 }
 
 // Pull thread that will pull the messages from the queue and
-// build a new parse_handler to compare the messages
-static void* pull_handler(void* args) {
-    Watcher* watcher = (Watcher*)args;
-    Log* log = watcher->get_log();
-    IRCClient* iirc = watcher->get_irc();
-    BoundedQueue<Message>* queue = watcher->get_queue();
-    ThreadArgs* t_args = new ThreadArgs();
-    t_args->w = watcher;
+// build a new handler to compare the messages
+void Watcher::pull_handler() {
     std::vector<Message> temp;
 
     // Main pull loop
-    while(iirc->connected() && watcher->running()) {
-        temp.push_back(queue->pull());
+    while(irc->connected() && running()) {
+        temp.push_back(msg_queue->pull());
+        log->d("Queue size: " + std::to_string(temp.size()));
         if (temp.size() >= QUEUE_BOUND) {
+            log->d("Starting a new parse thread");
             // start thread 
-            pthread_t thread;
-            if (watcher->get_thread(thread)) {
-                t_args->q = new std::vector<Message>(temp);
-                if (pthread_create(&thread, NULL, parse_handler, t_args) == 0) {
-                    log->w("Failed to create a parse_handler thread!");
-                } else {
-                    log->w("No free threads available, dropping " + std::to_string(temp.size()) + " messages!");
-                }
-            }
-            temp.empty();
+            std::thread thread(&Watcher::parse_handler,this,std::vector<Message>(temp));
+            _running_threads.push_back(std::move(thread));
+            // clear the thread
+            temp.clear();
         }
     }
-    
-    // Thread exit
-    pthread_exit(0);
 }
 
 // Parse the messages from the queue for repeats
-static void* parse_handler(void* args) {
-    Watcher* watcher = ((struct ThreadArgs*)args)->w;
-    Log* log = watcher->get_log();
-    std::vector<Message>* msgs = ((struct ThreadArgs*)args)->q;
-    int size = msgs->size();
+void Watcher::parse_handler(std::vector<Message> msgs) {
+    int size = msgs.size();
+    log->d("Parse thread initialized, msgs.size(): " + std::to_string(size));
     for (int i = 0; i < size; i++) {
-        int index_length = (*msgs)[i].text.length();
-        for (int j = i; j < size; j++) {
-            if (abs((*msgs)[j].text.length() - index_length) < DIFF_TOL) {
-                int score = levenshtein_distance((*msgs)[i].text,(*msgs)[j].text);
+        int index_length = msgs[i].text.length();
+        for (int j = i + 1; j < size; j++) {
+            // log->d("Parse msg1 size: " + std::to_string(index_length) + " msg2 size: " + std::to_string(msgs[j].text.length()));
+            if (std::abs((double)(msgs[j].text.length() - index_length)) < DIFF_TOL) {
+                int score = levenshtein_distance(msgs[i].text,msgs[j].text);
                 if (score < DIFF_TOL) {
-                    log->d("LD Score: " + std::to_string(score) + " messages: " + (*msgs)[i].text + " ~ " +  (*msgs)[j].text);
+                    log->d("LD Score: " + std::to_string(score) + " messages: " + msgs[i].text + " ~ " +  msgs[j].text);
+                    break;
                 }
             }
         }
     }
-    // Close up thread
-    delete msgs;
-    watcher->free_thread(pthread_self());
-    pthread_exit(0); 
 }
 
 // Levenshtein distance calculation (https://en.wikipedia.org/wiki/Levenshtein_distance)
