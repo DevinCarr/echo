@@ -10,12 +10,13 @@
 #include <iostream>
 #include <pthread.h>
 #include <signal.h>
+#include <thread>
 
 // Global variables for threads and state monitoring
 volatile bool running = false;
 Log* logger;
-pthread_t irc_thread;
-pthread_t w_thread;
+std::thread irc_thread;
+std::thread w_thread;
 
 char* tmi_hostname = "irc.twitch.tv";
 char* whispers_hostname = "192.16.64.180";
@@ -30,8 +31,7 @@ void signal_handler(int signal) {
     running = false;
 }
 
-void* parse_irc(void* args) {
-    IRCClient* iirc = (IRCClient*)args;
+void irc_handler(IRCClient* iirc) {
     Watcher* watcher = new Watcher(logger,iirc);
     watcher->start();
     while (iirc->connected() && running) {
@@ -42,12 +42,10 @@ void* parse_irc(void* args) {
     pthread_exit(0);
 }
 
-void* parse_whispers(void* args) {
-    IRCClient* iirc = (IRCClient*)args;
-    
+void whispers_handler(IRCClient* iirc) {
     // Send ready message to owner
     if (iirc->priv_me("Running at: " + channel)) {
-        logger->i("Sent live message to: " + iirc->get_owner());
+        logger->d("Sent live message to: " + iirc->get_owner());
     }
 
     while(iirc->connected() && running) {
@@ -55,70 +53,72 @@ void* parse_whispers(void* args) {
     }
 
     if (iirc->priv_me("Shutting down..")) {
-        logger->i("Sent shutdown message to: " + iirc->get_owner());
+        logger->d("Sent shutdown message to: " + iirc->get_owner());
     }
-    pthread_exit(0);
 }
 
 // Connect to the standard irc server
 void connect_to_irc(IRCClient* iirc) {
     iirc->set_owner(owner);
-    logger->i("Connecting to: " + std::string(tmi_hostname));
+    logger->d("Connecting to: " + std::string(tmi_hostname));
     if (iirc->connect(tmi_hostname,port)) {
-        logger->i("!Connected");
-        logger->i("Logging in as: " + nick);
+        logger->d("Connected");
+        logger->d("Logging in as: " + nick);
         if (iirc->login(nick,pass)) {
-            logger->i("!Logged in");
-            logger->i("Joining channel: " + channel);
+            logger->d("Logged in");
+            logger->d("Joining channel: " + channel);
             if (iirc->join(channel)) {
-                logger->i("!Joined channel");
-                if (pthread_create(&irc_thread, NULL, parse_irc, iirc) == 0) {
-                    logger->i("Started watching channel");
-                }
+                logger->d("Joined channel");
+                std::thread th(irc_handler, iirc);
+                irc_thread = std::move(th);
+                logger->d("Started watching channel");
+            } else {
+                logger->e("Failed to join channel " + channel);
             }
+        } else {
+            logger->e("Failed to login");
         }
-    }
+    } else {
+        logger->e("Failed to connect to " + std::string(tmi_hostname));
+    } 
 }
 
 // Connect to the group chat server for whispers
 void connect_to_whispers(IRCClient* iirc) {
     iirc->set_owner(owner);
-    logger->i("Connecting to: " + std::string(whispers_hostname));
+    logger->d("Connecting to: " + std::string(whispers_hostname));
     if (iirc->connect(whispers_hostname,port)) {
-        logger->i("!Connected");
-        logger->i("Logging in as: " + nick);
+        logger->d("Connected");
+        logger->d("Logging in as: " + nick);
         if (iirc->login(nick,pass)) {
-            logger->i("!Logged in");
+            logger->d("Logged in");
             logger->i("Joining channel: jtv");
             if (iirc->join("#jtv")) {
-                logger->i("!Joined channel");
-                if (pthread_create(&w_thread, NULL, parse_whispers, iirc) == 0) {
-                    logger->i("Started watching channel");
-                }
+                logger->d("Joined channel");
+                std::thread th(whispers_handler, iirc);
+                w_thread = std::move(th);
+                logger->d("Started watching channel");
+            } else {
+                logger->e("Failed to join channel #jtv");
             }
+        } else {
+            logger->e("Failed to login");
         }
-    }
+    } else {
+        logger->e("Failed to connect to " + std::string(whispers_hostname));
+    } 
 }
 
 // Begin shutting down and cleanup
 void close() {
     logger->i("Shutting down...");
-
-    void* status;
-
     if (!running) {
-        logger->i("Joining irc_thread");
-        int rc = pthread_join(irc_thread, &status);
-        if (rc) {
-            logger->e("THREAD: irc_thread failed to join");
-        }
-        logger->d("irc_thread joined");
-        logger->d("Joining w_thread");
-        rc = pthread_join(w_thread, &status);
-        if (rc) {
-            logger->e("THREAD: w_thread failed to join");
-        }
-        logger->d("w_thread joined");
+        logger->d("Joining irc_thread and w_thread");
+        if (irc_thread.joinable()) irc_thread.join();
+        if (w_thread.joinable()) w_thread.join();
+        logger->d("Main threads joined");
+    } else {
+        logger->w("Running state is still true");
     }
 }
 
