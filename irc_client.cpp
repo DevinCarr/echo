@@ -29,8 +29,7 @@ bool IRCClient::send(std::string msg) {
 }
 
 std::string IRCClient::read() {
-    std::string buffer = irc.sread();
-    return buffer;
+    return irc.sread();
 }
 
 bool IRCClient::login(std::string nick, std::string pass) {
@@ -67,8 +66,7 @@ bool IRCClient::priv_me(std::string msg) {
 }
 
 Message IRCClient::parse() {
-    std::string buffer;
-    buffer = read();
+    std::string buffer(this->read());
     
     // Check watch commands
     if (buffer.substr(0,4).compare("PING") == 0) {

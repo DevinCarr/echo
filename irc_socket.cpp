@@ -65,7 +65,9 @@ std::string IRCSocket::sread() {
 
     int res = recv(_sockfd, buffer, MAX_MESSAGE - 1, 0);
     if (res > 0) {
-        return std::string(buffer);
+        std::string read_s = std::string(buffer);
+        read_s.pop_back();
+        return read_s;
     } else {
         log->e("Bad sread(): disconnecting");
         disconnect();
