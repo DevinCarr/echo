@@ -7,19 +7,22 @@
 #include "irc_client.h"
 #include "watcher.h"
 
+#include <atomic>
+#include <condition_variable>
 #include <iostream>
-#include <pthread.h>
 #include <signal.h>
 #include <thread>
 
 // Global variables for threads and state monitoring
-volatile bool running = false;
+std::atomic_bool _running;
+std::mutex running_mut;
+std::condition_variable running_cv;
 Log* logger;
 std::thread irc_thread;
 std::thread w_thread;
 
-char* tmi_hostname = "irc.twitch.tv";
-char* whispers_hostname = "192.16.64.180";
+std::string tmi_hostname = "irc.twitch.tv";
+std::string whispers_hostname = "192.16.64.180";
 int port = 6667;
 std::string owner = "biogeneration";
 std::string pass = "";
@@ -28,29 +31,30 @@ std::string channel = "";
 
 // Signal catch for Ctrl-C to halt the bot gracefully
 void signal_handler(int signal) {
-    running = false;
+    std::unique_lock<std::mutex> lock(running_mut);
+    _running = false;
+    running_cv.notify_all();
+    logger->d("notified all to quit");
 }
 
 void irc_handler(IRCClient* iirc) {
+    std::unique_lock<std::mutex> lock(running_mut);
     Watcher* watcher = new Watcher(logger,iirc);
     watcher->start();
-    while (iirc->connected() && running) {
-        ;;
-    }
+    running_cv.wait(lock, [](){ return !_running; });
+    logger->d("irc thread shutting down");
     watcher->stop();
     delete watcher;
-    pthread_exit(0);
 }
 
 void whispers_handler(IRCClient* iirc) {
+    std::unique_lock<std::mutex> lock(running_mut);
     // Send ready message to owner
     if (iirc->priv_me("Running at: " + channel)) {
         logger->d("Sent live message to: " + iirc->get_owner());
     }
 
-    while(iirc->connected() && running) {
-       ;;
-    }
+    running_cv.wait(lock, [](){ return !_running; });
 
     if (iirc->priv_me("Shutting down..")) {
         logger->d("Sent shutdown message to: " + iirc->get_owner());
@@ -109,19 +113,6 @@ void connect_to_whispers(IRCClient* iirc) {
     } 
 }
 
-// Begin shutting down and cleanup
-void close() {
-    logger->i("Shutting down...");
-    if (!running) {
-        logger->d("Joining irc_thread and w_thread");
-        if (irc_thread.joinable()) irc_thread.join();
-        if (w_thread.joinable()) w_thread.join();
-        logger->d("Main threads joined");
-    } else {
-        logger->w("Running state is still true");
-    }
-}
-
 int main(int argc, char * argv[]) {
     // Argument parsing
     for (int i=1; i<argc; i+=2) {
@@ -151,7 +142,7 @@ int main(int argc, char * argv[]) {
     logger->open_file();
     logger->i("Starting echo");
 
-    running = true;
+    _running = true;
 
     // Begin connections
     IRCClient* irc = new IRCClient(logger);
@@ -162,15 +153,16 @@ int main(int argc, char * argv[]) {
 
     // Setup signal watch
     signal(SIGINT, signal_handler);
-
-    // Wait here in main loop for the other threads
-    while (irc->connected() && running) {
-        ;;
+    
+    {
+        // Wait here in main loop for the other threads
+        std::unique_lock<std::mutex> lock(running_mut);
+        running_cv.wait(lock, [](){ return !_running; });
+        irc_thread.join();
+        w_thread.join();
+        logger->i("Shutting down...");
     }
     
-    // Begin clean shutdown
-    close();
-
     delete irc;
     delete wisp;
 

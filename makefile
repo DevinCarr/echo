@@ -23,7 +23,7 @@ semaphore.o: semaphore.cpp semaphore.h
 irc_socket.o: irc_socket.cpp irc_socket.h
 	$(CXX) -c $(CXXFlags) $<
 
-irc_client.o: irc_client.cpp irc_client.h
+irc_client.o: irc_client.cpp irc_client.h message.h
 	$(CXX) -c $(CXXFlags) $<
 
 watcher.o: watcher.cpp watcher.h

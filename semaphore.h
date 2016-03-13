@@ -5,13 +5,14 @@
 
 #pragma once
 
-#include <pthread.h>
+#include <condition_variable>
+#include <mutex>
 
 class Semaphore {
 private:
   int value;
-  pthread_mutex_t m;
-  pthread_cond_t c;
+  std::mutex m;
+  std::condition_variable c;
 
 public:
   Semaphore(int _val);

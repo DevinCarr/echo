@@ -3,12 +3,13 @@
  * Licensed under MIT (https://github.com/devincarr/echo/blob/master/LICENSE)
  */
 
-#ifndef _irc_client_h_
-#define _irc_client_h_
+#pragma once
 
 #include "irc_socket.h"
 #include "logger.h"
 #include "message.h"
+
+#include <string>
 
 class IRCClient {
 private:
@@ -26,7 +27,7 @@ public:
     bool connected() { return irc.connected(); }
     void set_owner(std::string owner);
     std::string get_owner() { return _owner; }
-    bool connect(char * hostname, int port);
+    bool connect(std::string hostname, int port);
     void disconnect();
     bool send(std::string msg);
     std::string read();
@@ -35,5 +36,3 @@ public:
     bool priv_me(std::string msg);
     Message parse();
 };
-
-#endif

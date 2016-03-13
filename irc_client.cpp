@@ -15,7 +15,7 @@ void IRCClient::set_owner(std::string owner) {
     _owner = owner;
 }
 
-bool IRCClient::connect(char * hostname, int port) {
+bool IRCClient::connect(std::string hostname, int port) {
     return irc.connect(hostname, port);
 }
 
@@ -90,7 +90,7 @@ Message IRCClient::parse() {
             fnd = buffer.find("!");
             if (fnd != std::string::npos) {
                 user = buffer.substr(1,fnd-1);
-                log->d(user + ": " + message);
+                //log->d(user + ": " + message);
                 return Message(user,message);
             }
         }

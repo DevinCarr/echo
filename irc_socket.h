@@ -35,7 +35,7 @@ public:
   IRCSocket(Log* l);
   ~IRCSocket();
 
-  bool connect(char * hostname, int port);
+  bool connect(std::string hostname, int port);
   void disconnect();
   std::string sread();
   bool swrite(std::string msg);
