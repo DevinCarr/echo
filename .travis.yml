@@ -16,4 +16,6 @@ before_script:
     - cd build
     - pwd
     - cmake --version
-script: "cmake .. -Dtest=ON && make && ls -al && ./echo-test"
+script: "cmake .. -Dtest=ON && make && make test"
+notifications:
+    email: false
