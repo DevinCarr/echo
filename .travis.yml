@@ -13,9 +13,8 @@ addons:
         - g++-4.8
 before_script:
     - mkdir build
-    - cd build
     - pwd
     - cmake --version
-script: "cmake .. -Dtest=ON && make && make test"
+script: "cd build && cmake .. -Dtest=ON && make && ./echo-test"
 notifications:
     email: false
