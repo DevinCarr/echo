@@ -7,9 +7,10 @@ set(PROJECT_NAME echo)
 project(${PROJECT_NAME} CXX)
 
 # Set options for build
-set(CMAKE_CXX_FLAGS "-g -Wall")
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_FLAGS "-g -Wall -std=c++14")
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Location of the .h headers
 include_directories(${echo_SOURCE_DIR}/include ${echo_SOURCE_DIR})
