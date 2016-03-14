@@ -26,10 +26,12 @@
 *.exe
 *.out
 *.app
-echo
 
 # Log Files
 *.log
 
 # DYSM folders
 *.dSYM
+
+# Build Directory
+build

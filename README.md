@@ -6,14 +6,28 @@ A Twitch.tv IRC echo bot.
 Echo will listen in on the twitch.tv chat and join in on the spam when it begins. It usually waits for a 1/4 ratio of normal chat to spammed messages to repeat and participate. The bot will also wait up to 10 seconds from when it joins the spam to speak again to make sure not to get too out of control.
 
 ## Build
+Building `echo` requires CMake
 ```shell
-$ make
+mkdir build
+cd build
+cmake ..
+make
 ```
+
+## Building Tests
+```shell
+mkdir build           # build directory
+cd build
+cmake -Dtest=on ..    # build with tests linked
+make
+make test             # or ./echo-test
+```
+
 ## Running
 Example:
 
 ```shell
-$ ./echo -p oauth:asdasdasdasdasdasdasd -n twitch_username -c twitch_channel
+./echo -p oauth:asdasdasdasdasdasdasd -n twitch_username -c twitch_channel
 ```
 Get your password using the oauth key generated from [here](http://twitchapps.com/tmi/) and then the channel of the twitch.tv stream.
 
@@ -24,7 +38,7 @@ The log files will match: `YYYY-MM-DD.log`
 
 ## Help
 ```shell
-$ ./echo -h
+./echo -h
 ```
 
 ```shell
