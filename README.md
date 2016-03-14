@@ -1,3 +1,4 @@
+[](https://travis-ci.org/DevinCarr/echo.svg?branch=master)
 # echo
 A Twitch.tv IRC echo bot.
 
