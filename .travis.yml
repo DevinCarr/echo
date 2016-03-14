@@ -2,4 +2,9 @@ language: cpp
 compiler:
     - clang
     - gcc
-script: "mkdir build && cd build && cmake .. -Dtest=ON && make && ./echo-test"
+before_script:
+    - mkdir build
+    - cd build
+    - pwd
+    - which cmake
+script: "cmake .. -Dtest=ON && make && ./echo-test"
