@@ -1,4 +1,4 @@
-[](https://travis-ci.org/DevinCarr/echo.svg?branch=master)
+[![Build Status](https://travis-ci.org/DevinCarr/echo.svg?branch=master)](https://travis-ci.org/DevinCarr/echo?branch=master)
 # echo
 A Twitch.tv IRC echo bot.
 
