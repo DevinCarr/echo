@@ -39,7 +39,9 @@ if (test)
 
     target_link_libraries(${echo_TEST_NAME} ${echo_LIB})
 
-    add_test(EchoUnitTests ${echo_TEST_NAME})
+    add_custom_target(unittest 
+        COMMAND ${echo_TEST_NAME}
+        DEPENDS ${echo_TEST_NAME})
 
 else()
     add_executable(${PROJECT_NAME} ${echo_SOURCE_DIR}/src/main.cpp)
