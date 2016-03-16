@@ -137,3 +137,35 @@ int levenshtein_distance(std::string s, std::string t) {
     return v1[t_length];
 }
 
+// Longest common substring calculation (https://en.wikipedia.org/wiki/Longest_common_substring_problem)
+std::string longest_common_substr(std::string S, std::string T) {
+    size_t z = 0; // length of LCSS
+    std::string ret; // LCSS return value
+    std::vector<std::vector<char>> L(S.length(), std::vector<char>(T.length()));
+
+    for (size_t i = 0; i < S.length(); i++) {
+        for (size_t j = 0; j < T.length(); j++) {
+            if (S[i] == T[j]) {
+                if (i == 0 or j == 0)
+                    L[i][j] = 1;
+                else
+                    L[i][j] = L[i-1][j-1] + 1;
+                if (L[i][j] >= z) {
+                    z = L[i][j];
+                    ret = S.substr(i-z+1,z);
+                }
+            } else {
+                L[i][j] = 0;
+            }
+        }
+    }
+
+    // check if the length of the longest substring is around 60%
+    // of the max(S,T) lengths
+    if (z < (size_t)std::ceil(0.6*std::max(S.length(),T.length())))
+        ret = "";
+    else 
+        return ret;
+}
+
+
