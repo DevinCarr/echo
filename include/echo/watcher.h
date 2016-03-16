@@ -49,5 +49,4 @@ public:
     std::mutex queue_pull_mutex;
 };
 
-int levenshtein_distance(std::string s, std::string t);
 std::string longest_common_substr(std::string S, std::string T);

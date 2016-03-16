@@ -93,48 +93,19 @@ void Watcher::pull_handler() {
 // Parse the messages from the queue for repeats
 void Watcher::parse_messages(std::vector<Message> msgs) {
     int size = msgs.size();
-    log->d("Parsing initialized, msgs.size(): " + std::to_string(size));
+    log->d("Parsing initialized, msgs.size() = " + std::to_string(size));
     for (int i = 0; i < size; i++) {
         int index_length = msgs[i].text.length();
         for (int j = i + 1; j < size; j++) {
-            // log->d("Parse msg1 size: " + std::to_string(index_length) + " msg2 size: " + std::to_string(msgs[j].text.length()));
             if (std::abs((double)(msgs[j].text.length() - index_length)) < DIFF_TOL) {
-                int score = levenshtein_distance(msgs[i].text,msgs[j].text);
-                if (score < DIFF_TOL) {
-                    log->d("LD Score: " + std::to_string(score) + " messages: " + msgs[i].text + " ~ " +  msgs[j].text);
+                std::string score = longest_common_substr(msgs[i].text,msgs[j].text);
+                if (!score.empty()) {
+                    log->d("String Match: " + score + " messages: " + msgs[i].text + " ~ " +  msgs[j].text);
                     break;
                 }
             }
         }
     }
-}
-
-// Levenshtein distance calculation (https://en.wikipedia.org/wiki/Levenshtein_distance)
-int levenshtein_distance(std::string s, std::string t) {
-    if (s == t) return 0;
-    if (s.empty()) return t.length();
-    if (t.empty()) return s.length();
-    
-    int t_length = t.length() + 1;
-    int v0[t_length];
-    int v1[t_length];
-
-    for (int i = 0; i < t_length; i++)
-        v0[i] = i;
-
-    for (int i = 0; i < s.length(); i++) {
-        v1[0] = i + 1;
-
-        for (int j = 0; j < t_length; j++) {
-            int cost = (s[i] == t[j]) ? 0 : 1;
-            v1[j + 1] = std::min(v1[j] + 1, std::min(v0[j + 1] + 1, v0[j] + cost));
-        }
-
-        for (int j = 0; j < t_length; j++)
-            v0[j] = v1[j];
-    }
-
-    return v1[t_length];
 }
 
 // Longest common substring calculation (https://en.wikipedia.org/wiki/Longest_common_substring_problem)
