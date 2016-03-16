@@ -17,6 +17,4 @@ TEST(LevenshteinDistanceTest, MatchUpper) {
 
 TEST(LevenshteinDistanceTest, MatchLower) {
     EXPECT_EQ(3, levenshtein_distance("AAA","aaa"));
-
-    EXPECT_EQ(3, levenshtein_distance("ABC","bcd"));
 }
