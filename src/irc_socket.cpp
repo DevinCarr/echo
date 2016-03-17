@@ -7,15 +7,16 @@
 
 const int MAX_MESSAGE = 2048;
 
-IRCSocket::IRCSocket(Log* l): _connected(false), log(l) {
+IRCSocket::IRCSocket(): _connected(false) {
+    log = spdlog::get("echo");
     if ((_sockfd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) {
-        log->e("Socket create failure.");
+        log->warn("Socket create failure.");
         exit(-1);
     }
 
     int on = 1;
     if (setsockopt(_sockfd, SOL_SOCKET, SO_REUSEADDR, (char const*)&on, sizeof(on)) == -1) {
-        log->e("Invalid socket.");
+        log->warn("Invalid socket.");
         exit(-1);
     }
     fcntl(_sockfd, F_SETFL, O_NONBLOCK);
@@ -30,7 +31,7 @@ bool IRCSocket::connect(std::string hostname, int port) {
     hostent* he;
 
     if (!(he = gethostbyname(hostname.c_str()))) {
-        log->e("Could not resolve hostname");
+        log->warn("Could not resolve hostname");
         exit(-1);
     }
 
@@ -42,7 +43,7 @@ bool IRCSocket::connect(std::string hostname, int port) {
     memset(&(addr.sin_zero), '\0', 8);
 
     if (::connect(_sockfd, (sockaddr*)&addr, sizeof(addr)) == -1) {
-        log->e("Could not connect to hostname: " + hostname);
+        log->warn("Could not connect to hostname: " + hostname);
         close(_sockfd);
         exit(-1);
     }
@@ -79,14 +80,14 @@ std::string IRCSocket::sread() {
             read_s.pop_back();
             return read_s;
         } else {
-            log->e("Bad sread(): disconnecting");
+            log->warn("Bad sread(): disconnecting");
             disconnect();
         }
     } else if (rv == 0) {
         // timeout occured
     } else {
         // error occured
-        log->e("Select returned: " + std::to_string(rv));
+        log->warn("Select returned: " + std::to_string(rv));
         disconnect();
         return "";
     }

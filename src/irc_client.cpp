@@ -5,12 +5,12 @@
 
 #include "echo/irc_client.h"
 
-IRCClient::IRCClient(Log* l):
-    irc(IRCSocket(l)),
-    log(l),
+IRCClient::IRCClient():
+    irc(IRCSocket()),
     send_queue(new BoundedQueue<std::string>(20)),
     last_sent(0)
     {
+        log = spdlog::get("echo");
         std::thread thread(&IRCClient::send_handler,this);
         send_thread = std::move(thread);
     }
@@ -31,12 +31,12 @@ bool IRCClient::connect(std::string hostname, int port) {
 void IRCClient::disconnect() {
     send_message("PART #" + _channel);
     send_message("QUIT");
-    log->d("Disconnected and sent PART and QUIT");
+    log->debug("Disconnected and sent PART and QUIT");
     irc.disconnect();
     send_queue->push(""); // send a blank message in case
-    log->d("sent");
+    log->debug("sent");
     send_thread.join();
-    log->d("cleaned up");
+    log->debug("cleaned up");
 }
 
 // Add a send to a queue to check whether it can send or not.
@@ -81,9 +81,9 @@ void IRCClient::send_handler() {
         if (!message.empty()) {
             if (!ready()) {
                 send_message("PRIVMSG #" + _channel + " :" + message);
-                log->d("[SENDING] PRIVMSG #" + _channel + " :" + message);
+                log->debug("[SENDING] PRIVMSG #" + _channel + " :" + message);
             } else {
-                log->d("[SENDING] Dropped message: " + message);
+                log->debug("[SENDING] Dropped message: " + message);
             }
         }
     }
@@ -131,9 +131,9 @@ Message IRCClient::parse() {
     
     // Check watch commands
     if (buffer.substr(0,4).compare("PING") == 0) {
-        log->d("PING recieved");
+        log->debug("PING recieved");
         send_message("PONG" + buffer.substr(4));
-        log->d("PONG replied");
+        log->debug("PONG replied");
         return Message("irc","ping");
     }
 
@@ -151,7 +151,7 @@ Message IRCClient::parse() {
             fnd = buffer.find("!");
             if (fnd != std::string::npos) {
                 user = buffer.substr(1,fnd-1);
-                log->d(user + ": " + message);
+                log->debug(user + ": " + message);
                 return Message(user,message);
             }
         }

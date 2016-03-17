@@ -5,10 +5,10 @@
 
 #pragma once
 
-#include "echo/logger.h"
 #include "echo/irc_client.h"
 #include "echo/message.h"
 #include "echo/bounded_queue.h"
+#include "spdlog/spdlog.h"
 
 #include <atomic>
 #include <cmath>
@@ -16,6 +16,7 @@
 #include <iostream>
 #include <functional>
 #include <pthread.h>
+#include <memory>
 #include <mutex>
 #include <sstream>
 #include <string>
@@ -31,13 +32,13 @@
 
 class Watcher {
 private:
-    Log* log;
+    std::shared_ptr<spdlog::logger> log;
     IRCClient* irc;
     std::atomic_bool _running;
     std::vector<std::thread> _running_threads;
     BoundedQueue<Message>* msg_queue;
 public:
-    Watcher(Log* l, IRCClient* i);
+    Watcher(IRCClient* i);
     ~Watcher();
     bool running() { return _running && irc->connected(); }
     void start();

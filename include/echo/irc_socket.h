@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "echo/logger.h"
+#include "spdlog/spdlog.h"
 
 #include <cassert>
 #include <cstring>
@@ -13,6 +13,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
+#include <memory>
 #include <netinet/in.h>
 #include <netdb.h>
 #include <fcntl.h>
@@ -26,10 +27,10 @@ class IRCSocket {
 private:
   int _sockfd;
   bool _connected;
-  Log* log;
+  std::shared_ptr<spdlog::logger> log;
 
 public:
-  IRCSocket(Log* l);
+  IRCSocket();
   ~IRCSocket();
 
   bool connect(std::string hostname, int port);

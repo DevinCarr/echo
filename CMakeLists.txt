@@ -24,19 +24,23 @@ add_library(${echo_LIB} ${SRC_FILES})
 set(echo_TEST_NAME ${PROJECT_NAME}_test)
 file(GLOB TEST_SRC_FILES ${echo_SOURCE_DIR}/tests/*.cpp)
 
+# Add logging
+include_directories(${echo_SOURCE_DIR}/lib/spdlog ${echo_SOURCE_DIR})
+
 # Check for testing or not
 if (test)
     enable_testing()
     
     add_executable(${echo_TEST_NAME} ${TEST_SRC_FILES})
-
     add_subdirectory(${echo_SOURCE_DIR}/lib/gtest)
+
     add_dependencies(${echo_TEST_NAME} gtest)
+    add_dependencies(${PROJECT_NAME} spdlog)
 
     include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 
     target_link_libraries(${echo_TEST_NAME} gtest gtest_main)
-
+    target_link_libraries(${echo_TEST_NAME} spdlog)
     target_link_libraries(${echo_TEST_NAME} ${echo_LIB})
 
     add_custom_target(unittest 
@@ -44,8 +48,7 @@ if (test)
         DEPENDS ${echo_TEST_NAME})
 
 else()
+    # Set executable for normal operation
     add_executable(${PROJECT_NAME} ${echo_SOURCE_DIR}/src/main.cpp)
-
     target_link_libraries(${PROJECT_NAME} ${echo_LIB})
-
 endif()

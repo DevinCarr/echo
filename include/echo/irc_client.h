@@ -7,10 +7,11 @@
 
 #include "echo/bounded_queue.h"
 #include "echo/irc_socket.h"
-#include "echo/logger.h"
 #include "echo/message.h"
+#include "spdlog/spdlog.h"
 
 #include <ctime>
+#include <memory>
 #include <string>
 #include <thread>
 
@@ -24,7 +25,7 @@ private:
     std::string _channel;
 
     IRCSocket irc;
-    Log* log;
+    std::shared_ptr<spdlog::logger> log;
     BoundedQueue<std::string>* send_queue;
     std::thread send_thread;
     clock_t last_sent;
@@ -34,7 +35,7 @@ private:
     void send_handler();
 
 public:
-    IRCClient(Log* l);
+    IRCClient();
     ~IRCClient();
     bool connected() { return irc.connected(); }
     void set_owner(std::string owner);

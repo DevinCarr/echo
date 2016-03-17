@@ -3,7 +3,6 @@
  * Licensed under MIT (https://github.com/devincarr/echo/blob/master/LICENSE)
  */
 
-#include "echo/logger.h"
 #include "echo/irc_client.h"
 #include "echo/watcher.h"
 
@@ -17,7 +16,6 @@
 std::atomic_bool _running;
 std::mutex running_mut;
 std::condition_variable running_cv;
-Log* logger;
 std::thread irc_thread;
 std::thread w_thread;
 
@@ -34,15 +32,15 @@ void signal_handler(int signal) {
     std::unique_lock<std::mutex> lock(running_mut);
     _running = false;
     running_cv.notify_all();
-    logger->d("notified all to quit");
+    spdlog::get("echo")->info("notified all to quit");
 }
 
 void irc_handler(IRCClient* iirc) {
     std::unique_lock<std::mutex> lock(running_mut);
-    Watcher* watcher = new Watcher(logger,iirc);
+    Watcher* watcher = new Watcher(iirc);
     watcher->start();
     running_cv.wait(lock, [](){ return !_running; });
-    logger->d("irc thread shutting down");
+    spdlog::get("echo")->info("irc thread shutting down");
     watcher->stop();
     delete watcher;
 }
@@ -51,65 +49,67 @@ void whispers_handler(IRCClient* iirc) {
     std::unique_lock<std::mutex> lock(running_mut);
     // Send ready message to owner
     if (iirc->priv_me("Running at: " + channel)) {
-        logger->d("Sent live message to: " + iirc->get_owner());
+        spdlog::get("echo")->debug("Sent live message to: " + iirc->get_owner());
     }
 
     running_cv.wait(lock, [](){ return !_running; });
 
     if (iirc->priv_me("Shutting down..")) {
-        logger->d("Sent shutdown message to: " + iirc->get_owner());
+        spdlog::get("echo")->debug("Sent shutdown message to: " + iirc->get_owner());
     }
 }
 
 // Connect to the standard irc server
 void connect_to_irc(IRCClient* iirc) {
     iirc->set_owner(owner);
-    logger->d("Connecting to: " + std::string(tmi_hostname));
+    auto log = spdlog::get("echo");
+    log->debug("Connecting to: " + std::string(tmi_hostname));
     if (iirc->connect(tmi_hostname,port)) {
-        logger->d("Connected");
-        logger->d("Logging in as: " + nick);
+        log->debug("Connected");
+        log->debug("Logging in as: " + nick);
         if (iirc->login(nick,pass)) {
-            logger->d("Logged in");
-            logger->d("Joining channel: " + channel);
+            log->debug("Logged in");
+            log->debug("Joining channel: " + channel);
             if (iirc->join(channel)) {
-                logger->d("Joined channel");
+                log->debug("Joined channel");
                 std::thread th(irc_handler, iirc);
                 irc_thread = std::move(th);
-                logger->d("Started watching channel");
+                log->debug("Started watching channel");
             } else {
-                logger->e("Failed to join channel " + channel);
+                log->warn("Failed to join channel " + channel);
             }
         } else {
-            logger->e("Failed to login");
+            log->warn("Failed to login");
         }
     } else {
-        logger->e("Failed to connect to " + std::string(tmi_hostname));
+        log->warn("Failed to connect to " + std::string(tmi_hostname));
     } 
 }
 
 // Connect to the group chat server for whispers
 void connect_to_whispers(IRCClient* iirc) {
     iirc->set_owner(owner);
-    logger->d("Connecting to: " + std::string(whispers_hostname));
+    auto log = spdlog::get("echo");
+    log->debug("Connecting to: " + std::string(whispers_hostname));
     if (iirc->connect(whispers_hostname,port)) {
-        logger->d("Connected");
-        logger->d("Logging in as: " + nick);
+        log->debug("Connected");
+        log->debug("Logging in as: " + nick);
         if (iirc->login(nick,pass)) {
-            logger->d("Logged in");
-            logger->i("Joining channel: jtv");
+            log->debug("Logged in");
+            log->debug("Joining channel: jtv");
             if (iirc->join("#jtv")) {
-                logger->d("Joined channel");
+                log->debug("Joined channel");
                 std::thread th(whispers_handler, iirc);
                 w_thread = std::move(th);
-                logger->d("Started watching channel");
+                log->debug("Started watching channel");
             } else {
-                logger->e("Failed to join channel #jtv");
+                log->warn("Failed to join channel #jtv");
             }
         } else {
-            logger->e("Failed to login");
+            log->warn("Failed to login");
         }
     } else {
-        logger->e("Failed to connect to " + std::string(whispers_hostname));
+        log->warn("Failed to connect to " + std::string(whispers_hostname));
     } 
 }
 
@@ -138,15 +138,14 @@ int main(int argc, char * argv[]) {
     }
 
     // Start logging
-    logger = new Log();
-    logger->open_file();
-    logger->i("Starting echo");
+    auto log = spdlog::daily_logger_mt("echo", "logs/echo",0);
+    log->info("Starting echo");
 
     _running = true;
 
     // Begin connections
-    IRCClient* irc = new IRCClient(logger);
-    IRCClient* wisp = new IRCClient(logger);
+    IRCClient* irc = new IRCClient();
+    IRCClient* wisp = new IRCClient();
 
     connect_to_irc(irc);
     connect_to_whispers(wisp);
@@ -160,16 +159,13 @@ int main(int argc, char * argv[]) {
         running_cv.wait(lock, [](){ return !_running; });
         irc_thread.join();
         w_thread.join();
-        logger->i("Shutting down...");
+        log->info("Shutting down...");
     }
     
     delete irc;
     delete wisp;
 
-    logger->i("Shutdown complete");
-    logger->close_file();
-
-    delete logger;
+    log->info("Shutdown complete");
 
     return 0;
 }

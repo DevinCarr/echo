@@ -5,12 +5,13 @@
 
 #include "echo/watcher.h"
 
-Watcher::Watcher(Log* l, IRCClient* i):
-    log(l),
+Watcher::Watcher(IRCClient* i):
     irc(i),
     _running(false),
     msg_queue(new BoundedQueue<Message>(QUEUE_BOUND * 2))
-    { }
+    { 
+        log = spdlog::get("echo");
+    }
 
 Watcher::~Watcher() {
     if (_running) {
@@ -20,7 +21,7 @@ Watcher::~Watcher() {
 }
 
 void Watcher::start() {
-    log->d("Starting watcher threads");
+    log->debug("Starting watcher threads");
     _running = true;
 
     // Start the push thread
@@ -33,12 +34,12 @@ void Watcher::start() {
         _running_threads.push_back(std::move(pull_t));
     }
 
-    log->d("Watcher threads running");
+    log->debug("Watcher threads running");
 }
 
 void Watcher::stop() {
     // Set the stop for the push/pull threads
-    log->d("Halting " + std::to_string(_running_threads.size()) + " running threads");
+    log->debug("Halting " + std::to_string(_running_threads.size()) + " running threads");
     _running = false;
 
     for (int i = 0; i < _running_threads.size(); i++) {
@@ -50,7 +51,7 @@ void Watcher::stop() {
         thread.join();
     }
     
-    log->d("All watcher threads joined");
+    log->debug("All watcher threads joined");
 }
 
 // Push thread to acquire the messages and push them into
@@ -98,14 +99,14 @@ void Watcher::pull_handler() {
 // Parse the messages from the queue for repeats
 void Watcher::parse_messages(std::vector<Message> msgs, std::string thread_id) {
     int size = msgs.size();
-    log->d("[PARSING] Initialized with size " + std::to_string(size) + " on thread: " + thread_id);
+    log->debug("[PARSING] Initialized with size " + std::to_string(size) + " on thread: " + thread_id);
     for (int i = 0; i < size; i++) {
         int index_length = msgs[i].text.length();
         for (int j = i + 1; j < size; j++) {
             if (std::abs((double)(msgs[j].text.length() - index_length)) < DIFF_TOL) {
                 std::string message = longest_common_substr(msgs[i].text,msgs[j].text);
                 if (!message.empty()) {
-                    log->d("[PARSING] String Match: " + message + " messages: " + msgs[i].text + " ~ " +  msgs[j].text);
+                    log->debug("[PARSING] String Match: " + message + " messages: " + msgs[i].text + " ~ " +  msgs[j].text);
                     break;
                 }
             }
