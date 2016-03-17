@@ -17,6 +17,7 @@
 #include <functional>
 #include <pthread.h>
 #include <mutex>
+#include <sstream>
 #include <string>
 #include <thread>
 #include <vector>
@@ -44,7 +45,7 @@ public:
 
     void push_handler();
     void pull_handler();
-    void parse_messages(std::vector<Message> msgs);
+    void parse_messages(std::vector<Message> msgs, std::string thread_id);
 
     std::mutex queue_pull_mutex;
 };

@@ -8,8 +8,8 @@
 Watcher::Watcher(Log* l, IRCClient* i):
     log(l),
     irc(i),
-    msg_queue(new BoundedQueue<Message>(QUEUE_BOUND * 2)),
-    _running(false)
+    _running(false),
+    msg_queue(new BoundedQueue<Message>(QUEUE_BOUND * 2))
     { }
 
 Watcher::~Watcher() {
@@ -41,7 +41,7 @@ void Watcher::stop() {
     log->d("Halting " + std::to_string(_running_threads.size()) + " running threads");
     _running = false;
 
-    for (auto& t: _running_threads) {
+    for (int i = 0; i < _running_threads.size(); i++) {
         // Adds exit messages just if there are no messages in the queue
         msg_queue->push(Message("",""));
     }
@@ -71,6 +71,11 @@ void Watcher::push_handler() {
 void Watcher::pull_handler() {
     std::vector<Message> temp;
     Message pulled;
+    // get thread id
+    std::ostringstream ss;
+    ss << std::this_thread::get_id();
+    std::string thread_id = ss.str();
+
     // Check for access
     while (running()) {
         { // lock guard scope
@@ -85,22 +90,22 @@ void Watcher::pull_handler() {
                 }
             }
         } // end guard scope
-        parse_messages(std::vector<Message>(temp));
+        parse_messages(std::vector<Message>(temp), thread_id);
         temp.clear();
     }
 }
 
 // Parse the messages from the queue for repeats
-void Watcher::parse_messages(std::vector<Message> msgs) {
+void Watcher::parse_messages(std::vector<Message> msgs, std::string thread_id) {
     int size = msgs.size();
-    log->d("Parsing initialized, msgs.size() = " + std::to_string(size));
+    log->d("[PARSING] Initialized with size " + std::to_string(size) + " on thread: " + thread_id);
     for (int i = 0; i < size; i++) {
         int index_length = msgs[i].text.length();
         for (int j = i + 1; j < size; j++) {
             if (std::abs((double)(msgs[j].text.length() - index_length)) < DIFF_TOL) {
                 std::string score = longest_common_substr(msgs[i].text,msgs[j].text);
                 if (!score.empty()) {
-                    log->d("String Match: " + score + " messages: " + msgs[i].text + " ~ " +  msgs[j].text);
+                    log->d("[PARSING] String Match: " + score + " messages: " + msgs[i].text + " ~ " +  msgs[j].text);
                     break;
                 }
             }
@@ -135,8 +140,8 @@ std::string longest_common_substr(std::string S, std::string T) {
     // of the max(S,T) lengths
     if (z < (size_t)std::ceil(0.6*std::max(S.length(),T.length())))
         ret = "";
-    else 
-        return ret;
+
+    return ret;
 }
 
 
