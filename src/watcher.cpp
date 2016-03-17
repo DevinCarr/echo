@@ -118,7 +118,7 @@ void Watcher::parse_messages(std::vector<Message> msgs, std::string thread_id) {
 std::string longest_common_substr(std::string S, std::string T) {
     size_t z = 0; // length of LCSS
     std::string ret; // LCSS return value
-    std::vector<std::vector<char>> L(S.length(), std::vector<char>(T.length()));
+    std::vector<std::vector<size_t>> L(S.length(), std::vector<size_t>(T.length(),0));
 
     for (size_t i = 0; i < S.length(); i++) {
         for (size_t j = 0; j < T.length(); j++) {

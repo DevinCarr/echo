@@ -35,3 +35,9 @@ TEST(LCSSTest, MatchingCommonSpam) {
             longest_common_substr("Keepo Keepo Keepo Keepo Keepo Keepo Keepo Keepo Keepo",
                 "Keepo Keepo Keepo Keepo Keepo Keepo Keepo Keepo Keepo 1"));
 }
+
+TEST(LCSSTest, LongMessages) {
+    ASSERT_EQ("PAJLADA forsenFajita PAJLADA forsenFajita PAJLADA forsenFajita PAJLADA forsenFajita PAJLADA forsenFajita PAJLADA forsenFajita PAJLADA forsenFajita PAJLADA forsenFajita PAJLADA forsenFajita PAJLADA forsenFajita PAJLADA forsenFajita PAJLADA",
+            longest_common_substr("PAJLADA forsenFajita PAJLADA forsenFajita PAJLADA forsenFajita PAJLADA forsenFajita PAJLADA forsenFajita PAJLADA forsenFajita PAJLADA forsenFajita PAJLADA forsenFajita PAJLADA forsenFajita PAJLADA forsenFajita PAJLADA forsenFajita PAJLADA",
+                "PAJLADA forsenFajita PAJLADA forsenFajita PAJLADA forsenFajita PAJLADA forsenFajita PAJLADA forsenFajita PAJLADA forsenFajita PAJLADA forsenFajita PAJLADA forsenFajita PAJLADA forsenFajita PAJLADA forsenFajita PAJLADA forsenFajita PAJLADA"));
+}
