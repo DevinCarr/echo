@@ -35,12 +35,10 @@ if (test)
     add_subdirectory(${echo_SOURCE_DIR}/lib/gtest)
 
     add_dependencies(${echo_TEST_NAME} gtest)
-    add_dependencies(${PROJECT_NAME} spdlog)
 
     include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 
     target_link_libraries(${echo_TEST_NAME} gtest gtest_main)
-    target_link_libraries(${echo_TEST_NAME} spdlog)
     target_link_libraries(${echo_TEST_NAME} ${echo_LIB})
 
     add_custom_target(unittest 
