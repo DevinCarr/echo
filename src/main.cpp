@@ -138,8 +138,17 @@ int main(int argc, char * argv[]) {
     }
 
     // Start logging
-    auto log = spdlog::daily_logger_mt("echo", "logs/echo",0);
-    log->info("Starting echo");
+    std::shared_ptr<spdlog::logger> log;
+    try {
+        log = spdlog::daily_logger_mt("echo", "logs/echo", 0, 0, true);
+        spdlog::set_level(spdlog::level::debug);
+        log->info("Starting echo");
+    } catch (const spdlog::spdlog_ex& ex) {
+        std::cout << "Log failed to initalize." << std::endl
+            << "This is probably because the folder \"logs/\" is" << std::endl
+            << "not available in the current working directory." << std::endl;
+        return 1;
+    }
 
     _running = true;
 
