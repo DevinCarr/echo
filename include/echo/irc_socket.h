@@ -24,8 +24,6 @@
 
 class IRCSocket {
 private:
-  struct addrinfo hints;
-  struct addrinfo *result;
   int _sockfd;
   bool _connected;
   Log* log;

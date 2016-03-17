@@ -103,9 +103,9 @@ void Watcher::parse_messages(std::vector<Message> msgs, std::string thread_id) {
         int index_length = msgs[i].text.length();
         for (int j = i + 1; j < size; j++) {
             if (std::abs((double)(msgs[j].text.length() - index_length)) < DIFF_TOL) {
-                std::string score = longest_common_substr(msgs[i].text,msgs[j].text);
-                if (!score.empty()) {
-                    log->d("[PARSING] String Match: " + score + " messages: " + msgs[i].text + " ~ " +  msgs[j].text);
+                std::string message = longest_common_substr(msgs[i].text,msgs[j].text);
+                if (!message.empty()) {
+                    log->d("[PARSING] String Match: " + message + " messages: " + msgs[i].text + " ~ " +  msgs[j].text);
                     break;
                 }
             }

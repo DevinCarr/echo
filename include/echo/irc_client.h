@@ -5,11 +5,16 @@
 
 #pragma once
 
+#include "echo/bounded_queue.h"
 #include "echo/irc_socket.h"
 #include "echo/logger.h"
 #include "echo/message.h"
 
+#include <ctime>
 #include <string>
+#include <thread>
+
+#define TIME_BETWEEN_SEND 20
 
 class IRCClient {
 private:
@@ -20,6 +25,13 @@ private:
 
     IRCSocket irc;
     Log* log;
+    BoundedQueue<std::string>* send_queue;
+    std::thread send_thread;
+    clock_t last_sent;
+
+    bool ready();
+    bool send_message(std::string msg);
+    void send_handler();
 
 public:
     IRCClient(Log* l);
