@@ -16,6 +16,7 @@
 #include <iostream>
 #include <functional>
 #include <pthread.h>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <sstream>

@@ -11,8 +11,6 @@ IRCClient::IRCClient():
     last_sent(0)
     {
         log = spdlog::get("echo");
-        std::thread thread(&IRCClient::send_handler,this);
-        send_thread = std::move(thread);
     }
 
 IRCClient::~IRCClient() {
@@ -25,7 +23,10 @@ void IRCClient::set_owner(std::string owner) {
 }
 
 bool IRCClient::connect(std::string hostname, int port) {
-    return irc.connect(hostname, port);
+    bool ret = irc.connect(hostname, port);
+    std::thread thread(&IRCClient::send_handler,this);
+    send_thread = std::move(thread);
+    return ret;
 }
 
 void IRCClient::disconnect() {
@@ -34,9 +35,8 @@ void IRCClient::disconnect() {
     log->debug("Disconnected and sent PART and QUIT");
     irc.disconnect();
     send_queue->push(""); // send a blank message in case
-    log->debug("sent");
     send_thread.join();
-    log->debug("cleaned up");
+    log->debug("IRC cleaned up");
 }
 
 // Add a send to a queue to check whether it can send or not.
@@ -76,10 +76,11 @@ bool IRCClient::ready() {
 // Currently a message is dropped if !ready()
 void IRCClient::send_handler() {
     std::string message;
+    log->debug("[SENDING] thread started");
     while (connected()) {
         message = send_queue->pull();
         if (!message.empty()) {
-            if (!ready()) {
+            if (ready()) {
                 send_message("PRIVMSG #" + _channel + " :" + message);
                 log->debug("[SENDING] PRIVMSG #" + _channel + " :" + message);
             } else {
@@ -87,6 +88,7 @@ void IRCClient::send_handler() {
             }
         }
     }
+    log->debug("[SENDING] thread quit");
 }
 
 std::string IRCClient::read() {

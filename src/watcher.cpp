@@ -99,6 +99,7 @@ void Watcher::pull_handler() {
 // Parse the messages from the queue for repeats
 void Watcher::parse_messages(std::vector<Message> msgs, std::string thread_id) {
     int size = msgs.size();
+    std::map<std::string,size_t> store_map;
     log->debug("[PARSING] Initialized with size " + std::to_string(size) + " on thread: " + thread_id);
     for (int i = 0; i < size; i++) {
         int index_length = msgs[i].text.length();
@@ -107,9 +108,32 @@ void Watcher::parse_messages(std::vector<Message> msgs, std::string thread_id) {
                 std::string message = longest_common_substr(msgs[i].text,msgs[j].text);
                 if (!message.empty()) {
                     log->debug("[PARSING] String Match: " + message + " messages: " + msgs[i].text + " ~ " +  msgs[j].text);
-                    break;
+                    auto search = store_map.find(message);
+                    if (search != store_map.end()) {
+                        search->second++;
+                    } else {
+                        store_map[message] = 1;
+                    }
                 }
             }
+        }
+    }
+
+    // check for amount of messages to count as valid
+    std::string msg;
+    size_t max_count = 0;
+    for (auto kv: store_map) {
+        if (kv.second > max_count) {
+            max_count = kv.second;
+            msg = kv.first;
+        }
+    }
+    if (max_count > (size_t)std::floor(0.3*QUEUE_BOUND)) {
+        if (!msg.empty()) {
+            size_t fnd = msg.find("\r");
+            msg.erase(msg.begin()+fnd);
+            log->debug("[PARSING] Valid message: " + msg);
+            irc->send(msg);
         }
     }
 }
