@@ -1,5 +1,4 @@
-[![Build Status](https://travis-ci.org/DevinCarr/echo.svg?branch=master)](https://travis-ci.org/DevinCarr/echo?branch=master)
-# echo
+# echo [![Build Status](https://travis-ci.org/DevinCarr/echo.svg?branch=master)](https://travis-ci.org/DevinCarr/echo?branch=master)
 A Twitch.tv IRC echo bot.
 
 ## Usage
@@ -21,7 +20,7 @@ mkdir build           # build directory
 cd build
 cmake -Dtest=on ..    # build with tests linked
 make
-make test             # or ./echo-test
+make unittest             # or ./echo-test
 ```
 
 ## Running
@@ -33,16 +32,15 @@ Example:
 Get your password using the oauth key generated from [here](http://twitchapps.com/tmi/) and then the channel of the twitch.tv stream.
 
 ## Logs
-The bot wil create a log file (currently stored in the current directory of the executable).
+The bot wil create a log file (currently stored in the current working directory in `logs/`).
+*Note*: You do have to `mkdir logs` the logs folder for now.
 
 The log files will match: `YYYY-MM-DD.log`
 
 ## Help
 ```shell
 ./echo -h
-```
 
-```shell
 Echo: A twitch.tv bot
 -p  oauth password for twitch.tv account.
 -n  twitch.tv username.
