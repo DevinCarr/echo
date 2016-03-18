@@ -39,7 +39,7 @@ void irc_handler(IRCClient* iirc) {
     std::unique_lock<std::mutex> lock(running_mut);
     Watcher* watcher = new Watcher(iirc);
     watcher->start();
-    running_cv.wait(lock, [](){ return !_running; });
+    while (_running) running_cv.wait(lock);
     spdlog::get("echo")->info("irc thread shutting down");
     watcher->stop();
     delete watcher;
@@ -52,7 +52,7 @@ void whispers_handler(IRCClient* iirc) {
         spdlog::get("echo")->debug("Sent live message to: " + iirc->get_owner());
     }
 
-    running_cv.wait(lock, [](){ return !_running; });
+    while (_running) running_cv.wait(lock);
 
     if (iirc->priv_me("Shutting down..")) {
         spdlog::get("echo")->debug("Sent shutdown message to: " + iirc->get_owner());
@@ -165,7 +165,7 @@ int main(int argc, char * argv[]) {
     {
         // Wait here in main loop for the other threads
         std::unique_lock<std::mutex> lock(running_mut);
-        running_cv.wait(lock, [](){ return !_running; });
+        while (_running) running_cv.wait(lock);
         irc_thread.join();
         w_thread.join();
         log->info("Shutting down...");
