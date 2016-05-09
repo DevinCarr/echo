@@ -10,12 +10,11 @@
 #include "echo/bounded_queue.h"
 #include "spdlog/spdlog.h"
 
+#include <algorithm>
 #include <atomic>
-#include <cmath>
 #include <condition_variable>
 #include <iostream>
 #include <functional>
-#include <pthread.h>
 #include <map>
 #include <memory>
 #include <mutex>

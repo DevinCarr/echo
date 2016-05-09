@@ -9,6 +9,14 @@ const int MAX_MESSAGE = 2048;
 
 IRCSocket::IRCSocket(): _connected(false) {
     log = spdlog::get("echo");
+
+    #ifdef _WIN32
+    WSADATA wsaData;
+    if (WSAStartup(MAKEWORD(2, 2), &wsaData)) {
+        std::cout << "Failed to initialize WSA: " << WSAGetLastError() << std::endl;
+    }
+    #endif
+
     if ((_sockfd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) {
         log->warn("Socket create failure.");
         exit(-1);
@@ -19,8 +27,14 @@ IRCSocket::IRCSocket(): _connected(false) {
         log->warn("Invalid socket.");
         exit(-1);
     }
+
+    #ifdef _WIN32
+    u_long m = 0;
+    ioctlsocket(_sockfd, FIONBIO, &m);
+    #else
     fcntl(_sockfd, F_SETFL, O_NONBLOCK);
     fcntl(_sockfd, F_SETFL, O_ASYNC);
+    #endif
 }
 
 IRCSocket::~IRCSocket() {
@@ -32,6 +46,9 @@ bool IRCSocket::connect(std::string hostname, int port) {
 
     if (!(he = gethostbyname(hostname.c_str()))) {
         log->warn("Could not resolve hostname");
+        #ifdef _WIN32
+        WSACleanup();
+        #endif
         exit(-1);
     }
 
@@ -44,7 +61,11 @@ bool IRCSocket::connect(std::string hostname, int port) {
 
     if (::connect(_sockfd, (sockaddr*)&addr, sizeof(addr)) == -1) {
         log->warn("Could not connect to hostname: " + hostname);
+        #ifdef _WIN32
+        closesocket(_sockfd);
+        #else
         close(_sockfd);
+        #endif
         exit(-1);
     }
 
@@ -54,7 +75,11 @@ bool IRCSocket::connect(std::string hostname, int port) {
 
 void IRCSocket::disconnect() {
     if (_connected) {
+        #ifdef _WIN32
+        closesocket(_sockfd);
+        #else
         close(_sockfd);
+        #endif
         _connected = false;
     }
 }
