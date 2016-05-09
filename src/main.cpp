@@ -20,7 +20,7 @@ std::thread irc_thread;
 std::thread w_thread;
 
 std::string tmi_hostname = "irc.twitch.tv";
-std::string whispers_hostname = "192.16.64.180";
+std::string whispers_hostname = "irc.chat.twitch.tv";
 int port = 6667;
 std::string owner = "biogeneration";
 std::string pass = "";

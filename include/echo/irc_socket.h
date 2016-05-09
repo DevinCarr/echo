@@ -5,23 +5,33 @@
 
 #pragma once
 
-#include "spdlog/spdlog.h"
-
-#include <cassert>
-#include <cstring>
-#include <iostream>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/socket.h>
 #include <memory>
+#include <iostream>
+#include <string>
+
+#ifdef _WIN32
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+#define NOMINMAX
+#include <WS2tcpip.h>
+#include <Winsock2.h>
+#include <Windows.h>
+#pragma comment(lib, "Ws2_32.lib")
+#else
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <netinet/in.h>
 #include <netdb.h>
 #include <fcntl.h>
-#include <unistd.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <string>
-#include <errno.h>
+#include <cassert>
+#include <cstring>
+#endif
+
+#include "spdlog/spdlog.h"
 
 class IRCSocket {
 private:

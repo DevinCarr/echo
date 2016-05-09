@@ -147,7 +147,7 @@ std::string longest_common_substr(std::string S, std::string T) {
     for (size_t i = 0; i < S.length(); i++) {
         for (size_t j = 0; j < T.length(); j++) {
             if (S[i] == T[j]) {
-                if (i == 0 or j == 0)
+                if (i == 0 || j == 0)
                     L[i][j] = 1;
                 else
                     L[i][j] = L[i-1][j-1] + 1;
@@ -163,7 +163,7 @@ std::string longest_common_substr(std::string S, std::string T) {
 
     // check if the length of the longest substring is around 60%
     // of the max(S,T) lengths
-    if (z < (size_t)std::ceil(0.6*std::max(S.length(),T.length())))
+    if (z < (size_t)std::ceil(0.6 * std::max(S.length(),T.length())))
         ret = "";
 
     return ret;
