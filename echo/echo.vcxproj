@@ -41,14 +41,14 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -69,10 +69,13 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>C:\Users\GnomeChild\Documents\GitHub\echo\include;C:\Users\GnomeChild\Documents\GitHub\echo\lib\gtest;C:\Users\GnomeChild\Documents\GitHub\echo\lib\spdlog;$(IncludePath)</IncludePath>
+    <IncludePath>..\include;..\lib\gtest;..\lib\spdlog;..\lib\tinyxml2;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>C:\Users\GnomeChild\Documents\GitHub\echo\lib\spdlog;C:\Users\GnomeChild\Documents\GitHub\echo\include;$(IncludePath)</IncludePath>
+    <IncludePath>..\include;..\lib\gtest;..\lib\spdlog;..\lib\tinyxml2;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>..\include;..\lib\gtest;..\lib\spdlog;..\lib\tinyxml2;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -119,6 +122,7 @@
     <ClCompile Include="..\src\irc_socket.cpp" />
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\semaphore.cpp" />
+    <ClCompile Include="..\src\settings.cpp" />
     <ClCompile Include="..\src\watcher.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -127,7 +131,13 @@
     <ClInclude Include="..\include\echo\irc_socket.h" />
     <ClInclude Include="..\include\echo\message.h" />
     <ClInclude Include="..\include\echo\semaphore.h" />
+    <ClInclude Include="..\include\echo\settings.h" />
     <ClInclude Include="..\include\echo\watcher.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\lib\tinyxml2\tinyxml2\tinyxml2.vcxproj">
+      <Project>{a7bcda66-5c75-4b8e-87df-f941eeceb9b3}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -5,6 +5,8 @@
 
 #include "echo/irc_client.h"
 #include "echo/watcher.h"
+#include "echo/settings.h"
+#include "spdlog/spdlog.h"
 
 #include <atomic>
 #include <condition_variable>
@@ -22,17 +24,13 @@ std::thread w_thread;
 std::string tmi_hostname = "irc.twitch.tv";
 std::string whispers_hostname = "irc.chat.twitch.tv";
 int port = 6667;
-std::string owner = "biogeneration";
-std::string pass = "";
-std::string nick = "";
-std::string channel = "";
 
 // Signal catch for Ctrl-C to halt the bot gracefully
 void signal_handler(int signal) {
     std::unique_lock<std::mutex> lock(running_mut);
     _running = false;
     running_cv.notify_all();
-    spdlog::get("echo")->info("notified all to quit");
+    spdlog::get("echo")->debug("notified all to quit");
 }
 
 void irc_handler(IRCClient* iirc) {
@@ -40,7 +38,7 @@ void irc_handler(IRCClient* iirc) {
     Watcher* watcher = new Watcher(iirc);
     watcher->start();
     while (_running) running_cv.wait(lock);
-    spdlog::get("echo")->info("irc thread shutting down");
+    spdlog::get("echo")->debug("irc thread shutting down");
     watcher->stop();
     delete watcher;
 }
@@ -48,35 +46,34 @@ void irc_handler(IRCClient* iirc) {
 void whispers_handler(IRCClient* iirc) {
     std::unique_lock<std::mutex> lock(running_mut);
     // Send ready message to owner
-    if (iirc->priv_me("Running at: " + channel)) {
-        spdlog::get("echo")->debug("Sent live message to: " + iirc->get_owner());
+    if (iirc->priv_me("Running at: " + iirc->channel())) {
+        spdlog::get("echo")->debug("Sent live message to: " + iirc->owner());
     }
 
     while (_running) running_cv.wait(lock);
 
     if (iirc->priv_me("Shutting down..")) {
-        spdlog::get("echo")->debug("Sent shutdown message to: " + iirc->get_owner());
+        spdlog::get("echo")->debug("Sent shutdown message to: " + iirc->owner());
     }
 }
 
 // Connect to the standard irc server
 void connect_to_irc(IRCClient* iirc) {
-    iirc->set_owner(owner);
     auto log = spdlog::get("echo");
     log->debug("Connecting to: " + std::string(tmi_hostname));
     if (iirc->connect(tmi_hostname,port)) {
         log->debug("Connected");
-        log->debug("Logging in as: " + nick);
-        if (iirc->login(nick,pass)) {
+        log->debug("Logging in as: " + iirc->owner());
+        if (iirc->login()) {
             log->debug("Logged in");
-            log->debug("Joining channel: " + channel);
-            if (iirc->join(channel)) {
+            log->debug("Joining channel: " + iirc->channel());
+            if (iirc->join(iirc->channel())) {
                 log->debug("Joined channel");
                 std::thread th(irc_handler, iirc);
                 irc_thread = std::move(th);
                 log->debug("Started watching channel");
             } else {
-                log->warn("Failed to join channel " + channel);
+                log->warn("Failed to join channel " + iirc->channel());
             }
         } else {
             log->warn("Failed to login");
@@ -88,13 +85,12 @@ void connect_to_irc(IRCClient* iirc) {
 
 // Connect to the group chat server for whispers
 void connect_to_whispers(IRCClient* iirc) {
-    iirc->set_owner(owner);
     auto log = spdlog::get("echo");
     log->debug("Connecting to: " + std::string(whispers_hostname));
     if (iirc->connect(whispers_hostname,port)) {
         log->debug("Connected");
-        log->debug("Logging in as: " + nick);
-        if (iirc->login(nick,pass)) {
+        log->debug("Logging in as: " + iirc->owner());
+        if (iirc->login()) {
             log->debug("Logged in");
             log->debug("Joining channel: jtv");
             if (iirc->join("#jtv")) {
@@ -114,47 +110,36 @@ void connect_to_whispers(IRCClient* iirc) {
 }
 
 int main(int argc, char * argv[]) {
+
+    // Setup Settings
+    Settings* settings = new Settings();
+    if (!settings->init()) {
+        return 1;
+    }
+
     // Argument parsing
-    for (int i=1; i<argc; i+=2) {
-        if (strncmp(argv[i], "-p", 2) == 0)
-            pass = argv[i+1];
-        else if (strncmp(argv[i], "-n", 2) == 0)
-            nick = argv[i+1];
-        else if (strncmp(argv[i], "-c", 2) == 0)
-            channel = argv[i+1];
-        else {
-            std::cout << "Echo: A twitch.tv bot" << std::endl
-                << "-p\toauth password for twitch.tv account." << std::endl
-                << "-n\ttwitch.tv username." << std::endl
-                << "-c\ttwitch.tv channel for echo to join" << std::endl;
-            return 0;
-        }
+    if (argc > 1) {
+        std::cout << "Echo: A twitch.tv bot" << std::endl
+        << "To start, put in your twitch username and password in the file "
+        << "located here:\n" << settings->settings_filepath << std::endl;
+        return 0;
     }
 
-    // Check for args (nickname, password, and channel)
-    if (pass.empty() && nick.empty() && channel.empty()) {
-        std::cout << "Error: missing pass/nick/channel, see help (-h)" << std::endl;
+    // Check credentials
+    if (!settings->verify_credentials()) {
+        std::cout << "Invalid Credentials: Make sure to change them to your twitch username/password\n"
+            << "Settings file location: " << settings->settings_filepath << std::endl;
         return 1;
     }
 
-    // Start logging
-    std::shared_ptr<spdlog::logger> log;
-    try {
-        log = spdlog::daily_logger_mt("echo", "logs/echo", 0, 0, true);
-        spdlog::set_level(spdlog::level::debug);
-        log->info("Starting echo");
-    } catch (const spdlog::spdlog_ex& ex) {
-        std::cout << "Log failed to initalize." << std::endl
-            << "This is probably because the folder \"logs/\" is" << std::endl
-            << "not available in the current working directory." << std::endl;
-        return 1;
-    }
+    // Get Logger
+    std::shared_ptr<spdlog::logger> log(spdlog::get("echo"));
 
     _running = true;
 
     // Begin connections
-    IRCClient* irc = new IRCClient();
-    IRCClient* wisp = new IRCClient();
+    IRCClient* irc = new IRCClient(settings);
+    IRCClient* wisp = new IRCClient(settings);
 
     connect_to_irc(irc);
     connect_to_whispers(wisp);
@@ -168,13 +153,14 @@ int main(int argc, char * argv[]) {
         while (_running) running_cv.wait(lock);
         irc_thread.join();
         w_thread.join();
-        log->info("Shutting down...");
+        log->debug("Shutting down...");
     }
     
     delete irc;
     delete wisp;
+    delete settings;
 
-    log->info("Shutdown complete");
+    log->debug("Shutdown complete");
 
     return 0;
 }
