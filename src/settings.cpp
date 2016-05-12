@@ -18,33 +18,33 @@ Settings::~Settings() {
 }
 
 std::string Settings::owner() {
-    return std::string(doc.FirstChildElement(ELEMENT_SETTINGS)
-        ->FirstChildElement(ELEMENT_USER)
+    return std::string(doc.FirstChildElement(ELEMENT_SETTINGS.c_str())
+        ->FirstChildElement(ELEMENT_USER.c_str())
         ->FirstChild()
         ->ToText()
         ->Value());
 }
 
 std::string Settings::pass() {
-    return std::string(doc.FirstChildElement(ELEMENT_SETTINGS)
-        ->FirstChildElement(ELEMENT_PASS)
+    return std::string(doc.FirstChildElement(ELEMENT_SETTINGS.c_str())
+        ->FirstChildElement(ELEMENT_PASS.c_str())
         ->FirstChild()
         ->ToText()
         ->Value());
 }
 
 std::string Settings::nick() {
-    return std::string(doc.FirstChildElement(ELEMENT_SETTINGS)
-        ->FirstChildElement(ELEMENT_USER)
+    return std::string(doc.FirstChildElement(ELEMENT_SETTINGS.c_str())
+        ->FirstChildElement(ELEMENT_USER.c_str())
         ->FirstChild()
         ->ToText()
         ->Value());
 }
 
 std::string Settings::channel() {
-    return std::string(doc.FirstChildElement(ELEMENT_SETTINGS)
-        ->FirstChildElement(ELEMENT_CHANS)
-        ->FirstChildElement(ELEMENT_CHAN)
+    return std::string(doc.FirstChildElement(ELEMENT_SETTINGS.c_str())
+        ->FirstChildElement(ELEMENT_CHANS.c_str())
+        ->FirstChildElement(ELEMENT_CHAN.c_str())
         ->FirstChild()
         ->ToText()
         ->Value());
@@ -64,8 +64,8 @@ bool Settings::verify_credentials() {
     std::string password = pass();
     std::string chan = channel();
 
-    if (username.empty() || username == USER_DUMMY) return false;
-    if (password.empty() || password == PASS_DUMMY) return false;
+    if (username.empty() || username == USER_DUMMY.c_str()) return false;
+    if (password.empty() || password == PASS_DUMMY.c_str()) return false;
     if (chan.empty()) return false;
 
     return true;
@@ -123,7 +123,6 @@ bool Settings::check_folders() {
 
     // create the echo directory
     std::string folder_path = path + ECHO_FOLDER;
-    std::cout << folder_path << std::endl;
     int status = mkdir(folder_path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
     if (status != 0) {
         if (errno != EEXIST) {
@@ -133,7 +132,6 @@ bool Settings::check_folders() {
     }
 
     folder_path += LOGS_FOLDER_PATH;
-    std::cout << folder_path << std::endl;
     status = mkdir(folder_path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
     if (status != 0) {
         if (errno != EEXIST) {
@@ -153,15 +151,15 @@ int Settings::open_file() {
 
     if (error == XML_ERROR_FILE_NOT_FOUND) {
         // create a default template file
-        XMLElement* settings_node = doc.NewElement(ELEMENT_SETTINGS);
-        XMLElement* user = doc.NewElement(ELEMENT_USER);
-        XMLElement* pass = doc.NewElement(ELEMENT_PASS);
-        XMLElement* channels_node = doc.NewElement(ELEMENT_CHANS);
-        XMLElement* channel = doc.NewElement(ELEMENT_CHAN);
+        XMLElement* settings_node = doc.NewElement(ELEMENT_SETTINGS.c_str());
+        XMLElement* user = doc.NewElement(ELEMENT_USER.c_str());
+        XMLElement* pass = doc.NewElement(ELEMENT_PASS.c_str());
+        XMLElement* channels_node = doc.NewElement(ELEMENT_CHANS.c_str());
+        XMLElement* channel = doc.NewElement(ELEMENT_CHAN.c_str());
 
-        XMLText* user_t = doc.NewText(USER_DUMMY);
-        XMLText* pass_t = doc.NewText(PASS_DUMMY);
-        XMLText* chan_t = doc.NewText(CHAN_DUMMY);
+        XMLText* user_t = doc.NewText(USER_DUMMY.c_str());
+        XMLText* pass_t = doc.NewText(PASS_DUMMY.c_str());
+        XMLText* chan_t = doc.NewText(CHAN_DUMMY.c_str());
         user->LinkEndChild(user_t);
         pass->LinkEndChild(pass_t);
         channel->LinkEndChild(chan_t);

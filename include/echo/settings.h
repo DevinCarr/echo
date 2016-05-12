@@ -35,19 +35,7 @@ const std::string LOGS_FOLDER = "/logs/echo";
 const std::string SETTINGS_FILE_NAME_NIX = "/settings.xml";
 #endif
 
-// XML Element names
 using namespace tinyxml2;
-
-static const char* ELEMENT_SETTINGS = "settings";
-static const char* ELEMENT_USER = "username";
-static const char* ELEMENT_PASS = "password";
-static const char* ELEMENT_CHANS = "channels";
-static const char* ELEMENT_CHAN = "channel";
-
-// Default template values for XML
-static const char* USER_DUMMY = "Kappa";
-static const char* PASS_DUMMY = "kappa123";
-static const char* CHAN_DUMMY = "pajlada";
 
 class Settings {
 public:
@@ -67,6 +55,17 @@ public:
     bool init();
     bool verify_credentials();
 private:
+    // XMLElement names
+    std::string ELEMENT_SETTINGS = "settings";
+    std::string ELEMENT_USER = "username";
+    std::string ELEMENT_PASS = "password";
+    std::string ELEMENT_CHANS = "channels";
+    std::string ELEMENT_CHAN = "channel";
+    // Default template values for XML
+    std::string USER_DUMMY = "Kappa";
+    std::string PASS_DUMMY = "kappa123";
+    std::string CHAN_DUMMY = "pajlada";
+
     std::shared_ptr<spdlog::logger> log;
     std::string log_filepath;
     tinyxml2::XMLDocument doc;

@@ -33,6 +33,7 @@ set(tinyxml2_LIB tinyxml2_lib)
 file(GLOB TINYXML2_SRC_FILES ${echo_SOURCE_DIR}/lib/tinyxml2/tinyxml2.cpp)
 include_directories(${echo_SOURCE_DIR}/lib/tinyxml2 ${echo_SOURCE_DIR})
 add_library(${tinyxml2_LIB} ${TINYXML2_SRC_FILES})
+target_link_libraries(${echo_LIB} ${tinyxml2_LIB})
 
 # Check for testing or not
 if (test)
@@ -55,7 +56,6 @@ if (test)
 else()
     # Set executable for normal operation
     add_executable(${PROJECT_NAME} ${echo_SOURCE_DIR}/src/main.cpp)
-    target_link_libraries(${echo_LIB} ${tinyxml2_LIB})
     target_link_libraries(${PROJECT_NAME} ${echo_LIB})
     target_link_libraries(${PROJECT_NAME} ${CMAKE_THREAD_LIBS_INIT})
 endif()
