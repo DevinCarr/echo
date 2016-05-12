@@ -16,12 +16,24 @@
 #include <shlobj.h>
 #include <codecvt>
 #include <Windows.h>
-#endif
 
+// Windows constants
 const std::wstring WECHO_FOLDER = L"\\echo";
 const std::wstring WLOGS_FOLDER = L"\\logs";
 const std::string LOGS_FOLDER = "\\logs\\echo";
 const std::string SETTINGS_FILE_NAME = "\\settings.xml";
+#else
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <cstdlib>
+
+// *NIX constants
+const std::string ECHO_FOLDER = "/.echo";
+const std::string LOGS_FOLDER_PATH = "/logs";
+const std::string LOGS_FOLDER = "/logs/echo";
+const std::string SETTINGS_FILE_NAME_NIX = "/settings.xml";
+#endif
 
 // XML Element names
 using namespace tinyxml2;

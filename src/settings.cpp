@@ -85,8 +85,7 @@ bool Settings::check_folders() {
     }
     // convert the filename to a std::string from std::wstring
     std::wstring wpath(path);
-    CoTaskMemFree(static_cast<void*>(path));
-
+    CoTaskMemFree(static_cast<void*>(path)); 
     // set the filepath for later
     wpath += WECHO_FOLDER;
     settings_filepath = std::wstring_convert<std::codecvt_utf8<wchar_t>>().to_bytes(wpath);
@@ -112,6 +111,37 @@ bool Settings::check_folders() {
         }
     }
 #else
+    const char* path_c = std::getenv("HOME");
+    std::string path(path_c);
+    // make sure the folder for #HOME exists
+    if (path.empty()) return false;
+
+    // set the filepath
+    settings_filepath = path + ECHO_FOLDER;
+    log_filepath = settings_filepath + LOGS_FOLDER;
+    settings_filepath += SETTINGS_FILE_NAME_NIX;
+
+    // create the echo directory
+    std::string folder_path = path + ECHO_FOLDER;
+    std::cout << folder_path << std::endl;
+    int status = mkdir(folder_path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+    if (status != 0) {
+        if (errno != EEXIST) {
+            std::cout << "Could not create directory for settings: " << strerror(errno) << std::endl;
+            return false;
+        }
+    }
+
+    folder_path += LOGS_FOLDER_PATH;
+    std::cout << folder_path << std::endl;
+    status = mkdir(folder_path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+    if (status != 0) {
+        if (errno != EEXIST) {
+            std::cout << "Could not create directory for logs: " << strerror(errno) << std::endl;
+            return false;
+        }
+    }
+
 #endif
     return true;
 }
