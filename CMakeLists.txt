@@ -5,6 +5,7 @@ option(test "Build all tests." OFF)
 
 set(PROJECT_NAME echo)
 project(${PROJECT_NAME} CXX)
+find_package(Threads REQUIRED)
 
 # Set options for build
 set(CMAKE_CXX_FLAGS "-g -Wall -std=c++11")
@@ -27,6 +28,12 @@ file(GLOB TEST_SRC_FILES ${echo_SOURCE_DIR}/tests/*.cpp)
 # Add logging
 include_directories(${echo_SOURCE_DIR}/lib/spdlog ${echo_SOURCE_DIR})
 
+# tinyxml2 library
+set(tinyxml2_LIB tinyxml2_lib)
+file(GLOB TINYXML2_SRC_FILES ${echo_SOURCE_DIR}/lib/tinyxml2/tinyxml2.cpp)
+include_directories(${echo_SOURCE_DIR}/lib/tinyxml2 ${echo_SOURCE_DIR})
+add_library(${tinyxml2_LIB} ${TINYXML2_SRC_FILES})
+
 # Check for testing or not
 if (test)
     enable_testing()
@@ -48,5 +55,7 @@ if (test)
 else()
     # Set executable for normal operation
     add_executable(${PROJECT_NAME} ${echo_SOURCE_DIR}/src/main.cpp)
+    target_link_libraries(${echo_LIB} ${tinyxml2_LIB})
     target_link_libraries(${PROJECT_NAME} ${echo_LIB})
+    target_link_libraries(${PROJECT_NAME} ${CMAKE_THREAD_LIBS_INIT})
 endif()

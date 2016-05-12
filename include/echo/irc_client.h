@@ -8,6 +8,7 @@
 #include "echo/bounded_queue.h"
 #include "echo/irc_socket.h"
 #include "echo/message.h"
+#include "echo/settings.h"
 #include "spdlog/spdlog.h"
 
 #include <ctime>
@@ -19,13 +20,11 @@
 
 class IRCClient {
 private:
-    std::string _owner;
-    std::string _nick;
-    std::string _pass;
+    Settings* settings;
     std::string _channel;
-
     IRCSocket irc;
     std::shared_ptr<spdlog::logger> log;
+
     BoundedQueue<std::string>* send_queue;
     std::thread send_thread;
     clock_t last_sent;
@@ -35,16 +34,18 @@ private:
     void send_handler();
 
 public:
-    IRCClient();
+    IRCClient(Settings* s);
     ~IRCClient();
+
     bool connected() { return irc.connected(); }
-    void set_owner(std::string owner);
-    std::string get_owner() { return _owner; }
+    std::string channel() { return _channel; }
+    std::string owner() { return settings->owner(); }
+
     bool connect(std::string hostname, int port);
     void disconnect();
     bool send(std::string msg);
     std::string read();
-    bool login(std::string nick, std::string pass);
+    bool login();
     bool join(std::string channel);
     bool priv_me(std::string msg);
     Message parse();

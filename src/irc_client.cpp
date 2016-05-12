@@ -5,7 +5,9 @@
 
 #include "echo/irc_client.h"
 
-IRCClient::IRCClient():
+IRCClient::IRCClient(Settings* s):
+    settings(s),
+    _channel(s->channel()),
     irc(IRCSocket()),
     send_queue(new BoundedQueue<std::string>(20)),
     last_sent(0)
@@ -16,10 +18,6 @@ IRCClient::IRCClient():
 IRCClient::~IRCClient() {
     disconnect();
     delete send_queue;
-}
-
-void IRCClient::set_owner(std::string owner) {
-    _owner = owner;
 }
 
 bool IRCClient::connect(std::string hostname, int port) {
@@ -95,12 +93,9 @@ std::string IRCClient::read() {
     return irc.sread();
 }
 
-bool IRCClient::login(std::string nick, std::string pass) {
-    _nick = nick;
-    _pass = pass;
-
-    if (send_message("PASS " + pass)) {
-        if (send_message("NICK " + nick)) {
+bool IRCClient::login() {
+    if (send_message("PASS " + settings->pass())) {
+        if (send_message("NICK " + settings->nick())) {
             return true;
         }
     }
@@ -119,12 +114,11 @@ bool IRCClient::join(std::string channel) {
 }
 
 bool IRCClient::priv_me(std::string msg) {
-    if (!_nick.empty() && !_channel.empty()) {
-        if (send_message("PRIVMSG #jtv :/w " + _owner + " " + msg)) {
+    if (_channel == "#jtv") {
+        if (send_message("PRIVMSG #jtv :/w " + settings->owner() + " " + msg)) {
             return true;
         }
     }
-
     return false;
 }
 
