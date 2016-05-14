@@ -7,33 +7,63 @@
 
 IRCClient::IRCClient(Settings* s):
     settings(s),
-    _channel(s->channel()),
     irc(IRCSocket()),
+    log(spdlog::get("echo")),
     send_queue(new BoundedQueue<std::string>(20)),
     last_sent(0)
-    {
-        log = spdlog::get("echo");
-    }
+    { }
 
 IRCClient::~IRCClient() {
     disconnect();
     delete send_queue;
 }
 
-bool IRCClient::connect(std::string hostname, int port) {
-    bool ret = irc.connect(hostname, port);
-    std::thread thread(&IRCClient::send_handler,this);
-    send_thread = std::move(thread);
-    return ret;
+// Connect/Login/Join channel of the IRC hostname
+bool IRCClient::connect(std::string hostname, std::string channel, int port) {
+    if (!irc.connect(hostname, port)) {
+        log->warn("Failed to join channel " + settings->channel());
+        return false;
+    }
+    log->debug("Connected");
+    log->debug("Logging in as: " + settings->owner());
+
+    if (!login()) {
+        log->warn("Failed to login");
+        return false;
+    }  
+    log->debug("Logged in");
+    log->debug("Joining channel: " + settings->channel());
+
+    if (!join(channel)) {
+        log->warn("Failed to connect to " + hostname);
+        return false;
+    }
+    log->debug("Joined channel");
+
+    // Set up recv_thread
+    recv_thread = std::thread(&IRCClient::recv_handler, this);
+    // Set up send_thread
+    send_thread = std::thread(&IRCClient::send_handler, this);
+    log->debug("Started watching channel");
+
+    return true;
 }
 
 void IRCClient::disconnect() {
+    if (!irc.connected()) {
+        if (send_thread.joinable())
+            send_thread.join();
+        if (recv_thread.joinable())
+            recv_thread.join();
+        return;
+    }
     send_message("PART #" + _channel);
     send_message("QUIT");
     log->debug("Disconnected and sent PART and QUIT");
     irc.disconnect();
     send_queue->push(""); // send a blank message in case
     send_thread.join();
+    recv_thread.join();
     log->debug("IRC cleaned up");
 }
 
@@ -44,6 +74,7 @@ bool IRCClient::send(std::string msg) {
     return true;
 }
 
+// Private send function to append a newline character to a message before sending
 bool IRCClient::send_message(std::string msg) {
     msg.append("\n");
     if (irc.swrite(msg))
@@ -89,10 +120,12 @@ void IRCClient::send_handler() {
     log->debug("[SENDING] thread quit");
 }
 
+// Red from the IRC socket
 std::string IRCClient::read() {
     return irc.sread();
 }
 
+// Login to IRC
 bool IRCClient::login() {
     if (send_message("PASS " + settings->pass())) {
         if (send_message("NICK " + settings->nick())) {
@@ -103,6 +136,7 @@ bool IRCClient::login() {
     return false;
 }
 
+// Join a IRC channel
 bool IRCClient::join(std::string channel) {
     _channel = channel;
 
@@ -113,15 +147,7 @@ bool IRCClient::join(std::string channel) {
     return false;
 }
 
-bool IRCClient::priv_me(std::string msg) {
-    if (_channel == "#jtv") {
-        if (send_message("PRIVMSG #jtv :/w " + settings->owner() + " " + msg)) {
-            return true;
-        }
-    }
-    return false;
-}
-
+// Parse a message from the IRC channel socket and parse it into a Message struct
 Message IRCClient::parse() {
     std::string buffer(this->read());
     

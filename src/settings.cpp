@@ -10,7 +10,8 @@ Settings::Settings() :
     log_filepath(std::string()),
     _tmi_hostname("irc.twitch.tv"),
     _whispers_hostname("irc.chat.twitch.tv"),
-    _port(6667)
+    _port(6667),
+    _running(false)
 { }
 
 Settings::~Settings() {
@@ -71,6 +72,11 @@ bool Settings::verify_credentials() {
     return true;
 }
 
+// Wait for the client to stop running
+void Settings::wait() {
+    std::unique_lock<std::mutex> lock(running_mut);
+    while (_running) running_cv.wait(lock);
+}
 
 // Open or create a new settings file
 bool Settings::check_folders() {

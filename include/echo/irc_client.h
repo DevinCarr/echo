@@ -19,7 +19,7 @@
 #define TIME_BETWEEN_SEND 20
 
 class IRCClient {
-private:
+protected:
     Settings* settings;
     std::string _channel;
     IRCSocket irc;
@@ -27,11 +27,11 @@ private:
 
     BoundedQueue<std::string>* send_queue;
     std::thread send_thread;
+    std::thread recv_thread;
     clock_t last_sent;
 
     bool ready();
-    bool send_message(std::string msg);
-    void send_handler();
+    bool send_message(std::string msg);  
 
 public:
     IRCClient(Settings* s);
@@ -41,12 +41,15 @@ public:
     std::string channel() { return _channel; }
     std::string owner() { return settings->owner(); }
 
-    bool connect(std::string hostname, int port);
+    bool connect(std::string hostname, std::string channel, int port = 6667);
     void disconnect();
     bool send(std::string msg);
     std::string read();
     bool login();
     bool join(std::string channel);
-    bool priv_me(std::string msg);
     Message parse();
+
+    // Abstract functions
+    virtual void send_handler();
+    virtual void recv_handler() = 0;
 };

@@ -124,6 +124,8 @@
     <ClCompile Include="..\src\semaphore.cpp" />
     <ClCompile Include="..\src\settings.cpp" />
     <ClCompile Include="..\src\watcher.cpp" />
+    <ClCompile Include="..\src\watcher_client.cpp" />
+    <ClCompile Include="..\src\whisper_client.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\echo\bounded_queue.h" />
@@ -133,6 +135,8 @@
     <ClInclude Include="..\include\echo\semaphore.h" />
     <ClInclude Include="..\include\echo\settings.h" />
     <ClInclude Include="..\include\echo\watcher.h" />
+    <ClInclude Include="..\include\echo\watcher_client.h" />
+    <ClInclude Include="..\include\echo\whisper_client.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\lib\tinyxml2\tinyxml2\tinyxml2.vcxproj">

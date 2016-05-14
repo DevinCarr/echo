@@ -8,6 +8,8 @@
 #include "spdlog/spdlog.h"
 #include "tinyxml2.h"
 
+#include <atomic>
+#include <condition_variable>
 #include <string>
 #include <iostream>
 #include <locale>
@@ -54,6 +56,10 @@ public:
 
     bool init();
     bool verify_credentials();
+
+    void start() { _running = true; }
+    void stop() { _running = false; running_cv.notify_all(); }
+    void wait();
 private:
     // XMLElement names
     std::string ELEMENT_SETTINGS = "settings";
@@ -78,4 +84,9 @@ private:
     int open_file();
     void save_file();
     bool start_logs();
+
+    // State condition variables
+    std::atomic_bool _running;
+    std::mutex running_mut;
+    std::condition_variable running_cv;
 };
