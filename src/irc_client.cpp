@@ -130,7 +130,7 @@ Message IRCClient::parse() {
         log->debug("PING recieved");
         send_message("PONG" + buffer.substr(4));
         log->debug("PONG replied");
-        return Message("irc","ping");
+        return Message("","");
     }
 
     // Parse text normally
@@ -142,6 +142,8 @@ Message IRCClient::parse() {
     std::size_t fnd = buffer.find(search_str);
     if (fnd != std::string::npos) {
         message = buffer.substr(fnd+search_str.length()+2);
+        // remove the trailing \n
+        message = message.substr(0, message.length() - 1);
         if (!message.empty()) {
             // Parse user
             fnd = buffer.find("!");
@@ -150,6 +152,8 @@ Message IRCClient::parse() {
                 log->debug(user + ": " + message);
                 return Message(user,message);
             }
+        } else {
+            log->debug("EMPTY MESSAGE: " + buffer);
         }
     }
     

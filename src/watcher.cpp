@@ -130,8 +130,6 @@ void Watcher::parse_messages(std::vector<Message> msgs, std::string thread_id) {
     }
     if (max_count > (size_t)std::floor(0.3*QUEUE_BOUND)) {
         if (!msg.empty()) {
-            size_t fnd = msg.find("\r");
-            msg.erase(msg.begin()+fnd);
             log->debug("[PARSING] Valid message: " + msg);
             irc->send(msg);
         }

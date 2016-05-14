@@ -144,6 +144,9 @@ int main(int argc, char * argv[]) {
     connect_to_irc(irc);
     connect_to_whispers(wisp);
 
+    std::cout << "Running..." << std::endl;
+    irc->send("Echo online.");
+
     // Setup signal watch
     signal(SIGINT, signal_handler);
     
@@ -155,6 +158,7 @@ int main(int argc, char * argv[]) {
         w_thread.join();
         log->debug("Shutting down...");
     }
+    std::cout << "Shutting down..." << std::endl;
     
     delete irc;
     delete wisp;
