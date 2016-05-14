@@ -10,11 +10,11 @@
 #include <string>
 
 #ifdef _WIN32
+#define _WINSOCKAPI_ 
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #define NOMINMAX
 #include <WS2tcpip.h>
 #include <Winsock2.h>
-#include <Windows.h>
 #pragma comment(lib, "Ws2_32.lib")
 #else
 #include <sys/types.h>
