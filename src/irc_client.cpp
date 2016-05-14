@@ -32,13 +32,18 @@ bool IRCClient::connect(std::string hostname, std::string channel, int port) {
         return false;
     }  
     log->debug("Logged in");
-    log->debug("Joining channel: " + settings->channel());
+    log->debug("Joining channel: " + channel);
 
     if (!join(channel)) {
         log->warn("Failed to connect to " + hostname);
         return false;
     }
     log->debug("Joined channel");
+
+    // Send extra commands
+    //send_message("CAP REQ :twitch.tv/tags");
+    send_message("CAP REQ :twitch.tv/membership");
+    //send_message("CAP REQ :twitch.tv/commands");
 
     // Set up recv_thread
     recv_thread = std::thread(&IRCClient::recv_handler, this);
@@ -76,6 +81,7 @@ bool IRCClient::send(std::string msg) {
 
 // Private send function to append a newline character to a message before sending
 bool IRCClient::send_message(std::string msg) {
+    log->debug("MSG: " + msg);
     msg.append("\n");
     if (irc.swrite(msg))
         return true;
@@ -120,7 +126,7 @@ void IRCClient::send_handler() {
     log->debug("[SENDING] thread quit");
 }
 
-// Red from the IRC socket
+// Read from the IRC socket
 std::string IRCClient::read() {
     return irc.sread();
 }

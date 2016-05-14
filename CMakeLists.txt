@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 2.8)
 option(test "Build all tests." OFF)
 
 set(PROJECT_NAME echo)
-project(${PROJECT_NAME} CXX)
+project(${PROJECT_NAME} CXX C)
 find_package(Threads REQUIRED)
 
 # Set options for build
