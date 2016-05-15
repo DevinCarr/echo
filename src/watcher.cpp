@@ -107,7 +107,6 @@ void Watcher::parse_messages(std::vector<Message> msgs, std::string thread_id) {
             if (std::abs((double)(msgs[j].text.length() - index_length)) < DIFF_TOL) {
                 std::string message = longest_common_substr(msgs[i].text,msgs[j].text);
                 if (!message.empty()) {
-                    log->debug("[PARSING] String Match: " + message + " messages: " + msgs[i].text + " ~ " +  msgs[j].text);
                     auto search = store_map.find(message);
                     if (search != store_map.end()) {
                         search->second++;

@@ -97,7 +97,7 @@ bool IRCClient::ready() {
         return true;
     }
 
-    float temp_time = (float)(last_sent - now) / CLOCKS_PER_SEC;
+    float temp_time = (float)(now - last_sent) / CLOCKS_PER_SEC;
 
     if (temp_time > TIME_BETWEEN_SEND) {
         last_sent = clock();
@@ -119,7 +119,7 @@ void IRCClient::send_handler() {
                 send_message("PRIVMSG #" + _channel + " :" + message);
                 log->debug("[SENDING] PRIVMSG #" + _channel + " :" + message);
             } else {
-                log->debug("[SENDING] Dropped message: " + message);
+                log->debug("[SENDING] Dropped message (sending to frequent): " + message);
             }
         }
     }
