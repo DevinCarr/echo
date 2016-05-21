@@ -2,50 +2,50 @@
 A Twitch.tv IRC echo bot.
 
 ## Usage
-*THIS CURRENTLY NOT READY:* The bot can only currently connect to channels and the group twitch chat for whispers.
-Echo will listen in on the twitch.tv chat and join in on the spam when it begins. It usually waits for a 1/4 ratio of normal chat to spammed messages to repeat and participate. The bot will also wait up to 10 seconds from when it joins the spam to speak again to make sure not to get too out of control.
+The bot can only currently connect to a [twitch.tv](https://www.twitch.tv/) chat channel, but could technically connect to any host with some alterations to the message parsing.
 
-## Build
-Building `echo` requires CMake
+Echo will listen in on the twitch.tv chat and look for multiple repeated messages and perform a Least Common Substring calculation to provide a similarity metric. If there are enough messages that are close to the same (and the bot hasn't sent a message recently) it will repeat the message into the chat.
+
+## Acquiring
+```shell
+$ git clone https://github.com/DevinCarr/echo.git
+$ cd echo
+$ git submodule update --init --recursive
+```
+
+## Running
+
+### Unix/Linux
+
+Requirements:
+- CMake >= 2.8
+- C++11 compiler:
+  - clang++ >= 3.4
+  - g++ >= 4.8
+
 ```shell
 mkdir build
 cd build
 cmake ..
 make
 ```
-
-## Building Tests
+Example usage:
 ```shell
-mkdir build           # build directory
-cd build
-cmake -Dtest=on ..    # build with tests linked
-make
-make unittest             # or ./echo-test
+./echo
 ```
 
-## Running
-Example:
+### Windows
+Open the solution file in the `echo` folder and build with at least VS2015. (hasn't been tested with other Windows compilers)
 
-```shell
-./echo -p oauth:asdasdasdasdasdasdasd -n twitch_username -c twitch_channel
-```
+### Configuration
+After run once, a `settings.xml` file will be created for you to put your twitch username and password to login. The settings file will be located in:
+- Windows: `%APPDATA%\Roaming\echo`
+- Unix/Linux: `$HOME/.echo`
+
 Get your password using the oauth key generated from [here](http://twitchapps.com/tmi/) and then the channel of the twitch.tv stream.
 
 ## Logs
-The bot wil create a log file (currently stored in the current working directory in `logs/`).
-*Note*: You do have to `mkdir logs` the logs folder for now.
-
-The log files will match: `YYYY-MM-DD.log`
-
-## Help
-```shell
-./echo -h
-
-Echo: A twitch.tv bot
--p  oauth password for twitch.tv account.
--n  twitch.tv username.
--c  twitch.tv channel for echo to join
-```
+The bot wil create a log file (currently stored in the settings folder (see above) in `logs/`.
 
 ## Other
 Echo occassionally shows:
@@ -54,6 +54,15 @@ Echo occassionally shows:
 > PONG :tmi.twitch.tv
 ```
 This is a common response that echo makes to make sure that the twitch IRC doesn't disconnect echo for being AFK. ([Further](https://github.com/justintv/Twitch-API/blob/master/IRC.md))
+
+## Building Tests
+```shell
+mkdir build           # build directory
+cd build
+cmake -Dtest=on ..    # build with tests linked
+make
+make unittest         # or ./echo-test
+```
 
 ## License
 MIT - (view LICENSE for more information)
